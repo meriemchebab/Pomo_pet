@@ -11,6 +11,8 @@ class Phase(Enum):
 
 class ClockSettings(QObject):
     # use default pomodoro settings if not set 
+    # to do : add white noise settings and sounds too , dont use it in the UI of the clock
+    
     def __init__(self, duration: float = 25 * 60,
                   break_time: float = 5 * 60,
                     pomo_until_break: int = 4 ,
@@ -72,6 +74,14 @@ class ClockSettings(QObject):
         value = float(value)
         if value != self._long_break_time:
             self._long_break_time = value
+    
+    def update_settings(self, values : dict):
+        """this method updates the clock settings , will be called for the general settings and the clock settings"""
+        self._duration = values["duration"]
+        self._break_time = values["break_time"]
+        self._break_time = values["long_break_time"]
+        self._pomo_until_break = values["pomo_until_break"]
+        self._auto_start_next_phase = values["auto_start_next_phase"]
 
 class Clock(QObject):
     
