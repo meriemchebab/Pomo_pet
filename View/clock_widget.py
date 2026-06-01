@@ -93,7 +93,7 @@ class QuickSetupDialog(QDialog):
         duration_minutes: float = 25,
         break_minutes: float = 5,
         pomo_until_break: int = 4,
-        long_break_minutes = 30,
+        long_break_minutes=30,
         auto_start_next_phase: bool = False,
         parent=None,
     ):
@@ -123,7 +123,7 @@ class QuickSetupDialog(QDialog):
         self.break_spin.setSuffix(" min")
         self.break_spin.setDecimals(0)
         self.break_spin.setValue(break_minutes)
-        
+
         self.long_break_spin = QDoubleSpinBox()
         self.long_break_spin.setRange(1, 180)
         self.long_break_spin.setSuffix(" min")
@@ -178,6 +178,9 @@ class ClockWidget(QFrame):
         self._long_break_seconds = 30 * 60
         self._auto_start_next_phase = False
 
+        self._focused_today_seconds = 0
+        self._completed_sessions = 0
+
         root = QVBoxLayout(self)
         root.setContentsMargins(20, 20, 20, 20)
         root.setSpacing(14)
@@ -197,6 +200,28 @@ class ClockWidget(QFrame):
         self.meta_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.meta_label.setObjectName("metaLabel")
 
+        self.stats_card = QFrame()
+        self.stats_card.setObjectName("statsCard")
+        stats_layout = QVBoxLayout(self.stats_card)
+        stats_layout.setContentsMargins(14, 12, 14, 12)
+        stats_layout.setSpacing(2)
+
+        self.focus_stat_label = QLabel("Focused today")
+        self.focus_stat_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.focus_stat_label.setObjectName("statTitle")
+
+        self.focus_time_label = QLabel("0m")
+        self.focus_time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.focus_time_label.setObjectName("statValue")
+
+        self.focus_sessions_label = QLabel("0 sessions completed")
+        self.focus_sessions_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.focus_sessions_label.setObjectName("statMeta")
+
+        stats_layout.addWidget(self.focus_stat_label)
+        stats_layout.addWidget(self.focus_time_label)
+        stats_layout.addWidget(self.focus_sessions_label)
+
         controls = QHBoxLayout()
         controls.setSpacing(10)
 
@@ -205,6 +230,8 @@ class ClockWidget(QFrame):
 
         self.pause_btn = QPushButton("Pause")
         self.pause_btn.setObjectName("secondaryButton")
+        self.pause_btn.setCheckable(True)
+        self.pause_btn.toggled.connect(self._on_pause_toggled)
 
         self.reset_btn = QPushButton("Reset")
         self.reset_btn.setObjectName("secondaryButton")
@@ -217,25 +244,13 @@ class ClockWidget(QFrame):
         presets.setHorizontalSpacing(10)
         presets.setVerticalSpacing(10)
 
-        self.work_btn = QPushButton("Work")
-        self.short_break_btn = QPushButton("Short Break")
-        self.long_break_btn = QPushButton("Long Break")
         self.skip_btn = QPushButton("Skip")
         self.quick_setup_btn = QPushButton("Quick Setup")
 
-        for btn in [
-            self.work_btn,
-            self.short_break_btn,
-            self.long_break_btn,
-            self.skip_btn,
-            self.quick_setup_btn,
-        ]:
+        for btn in [self.skip_btn, self.quick_setup_btn]:
             btn.setObjectName("softButton")
             btn.setMinimumHeight(38)
 
-        presets.addWidget(self.work_btn, 0, 0)
-        presets.addWidget(self.short_break_btn, 0, 1)
-        presets.addWidget(self.long_break_btn, 1, 0)
         presets.addWidget(self.skip_btn, 1, 1)
         presets.addWidget(self.quick_setup_btn, 2, 0, 1, 2)
 
@@ -243,6 +258,7 @@ class ClockWidget(QFrame):
         root.addWidget(self.cycle_label)
         root.addWidget(self.face, alignment=Qt.AlignmentFlag.AlignCenter)
         root.addWidget(self.meta_label)
+        root.addWidget(self.stats_card)
         root.addLayout(controls)
         root.addLayout(presets)
 
@@ -268,6 +284,27 @@ class ClockWidget(QFrame):
             QLabel#metaLabel {
                 color: #8a7f65;
                 font-size: 13px;
+                font-weight: 600;
+            }
+            QFrame#statsCard {
+                background: #f6f0e3;
+                border: 1px solid #e4dac3;
+                border-radius: 16px;
+            }
+            QLabel#statTitle {
+                color: #7d745f;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.4px;
+            }
+            QLabel#statValue {
+                color: #2f2a22;
+                font-size: 22px;
+                font-weight: 800;
+            }
+            QLabel#statMeta {
+                color: #8a7f65;
+                font-size: 12px;
                 font-weight: 600;
             }
             QLabel#dialogIntro {
@@ -320,14 +357,49 @@ class ClockWidget(QFrame):
             """
         )
 
+        self.refresh_focus_stats()
         self.refresh()
+
+    def _format_focus_time(self, total_seconds: int) -> str:
+        total_minutes = total_seconds // 60
+        hours, minutes = divmod(total_minutes, 60)
+
+        if hours > 0:
+            return f"{hours}h {minutes:02d}m"
+        return f"{minutes}m"
+
+    def refresh_focus_stats(self):
+        self.focus_time_label.setText(self._format_focus_time(self._focused_today_seconds))
+
+        if self._completed_sessions == 1:
+            self.focus_sessions_label.setText("1 session completed")
+        else:
+            self.focus_sessions_label.setText(f"{self._completed_sessions} sessions completed")
+
+    def set_focus_stats(self, focused_seconds: int, completed_sessions: int):
+        self._focused_today_seconds = max(0, focused_seconds)
+        self._completed_sessions = max(0, completed_sessions)
+        self.refresh_focus_stats()
+
+    def add_focused_time(self, seconds: int):
+        self._focused_today_seconds += max(0, seconds)
+        self.refresh_focus_stats()
+
+    def increment_completed_sessions(self):
+        self._completed_sessions += 1
+        self.refresh_focus_stats()
+
+    def reset_focus_stats(self):
+        self._focused_today_seconds = 0
+        self._completed_sessions = 0
+        self.refresh_focus_stats()
 
     def open_quick_setup(self):
         """open a dialog box to change the pomodoro session settings"""
         dialog = QuickSetupDialog(
             duration_minutes=self._total / 60,
             break_minutes=self._break_seconds / 60,
-            long_break_minutes= int(self._long_break_seconds / 60),
+            long_break_minutes=int(self._long_break_seconds / 60),
             pomo_until_break=self._cycle_total,
             auto_start_next_phase=self._auto_start_next_phase,
             parent=self,
@@ -335,7 +407,6 @@ class ClockWidget(QFrame):
         if dialog.exec():
             values = dialog.values()
             self.apply_settings(values)
-            # values of the changes back to the controller
             self.settings_requested.emit(values)
 
     def apply_settings(self, settings: dict):
@@ -382,8 +453,10 @@ class ClockWidget(QFrame):
         self.face.remaining_text = f"{mins:02d}:{secs:02d}"
         self.face.progress = 1 - (self._seconds / max(1, self._total))
         self.face.update()
-# New user preferences from dialog → apply_settings()
 
-# Phase switched from work to break → set_phase_info() + set_duration()
-
-# Timer ticking each second → set_remaining()
+    def _on_pause_toggled(self, checked: bool):
+        """update pause button text based on checked state"""
+        if checked:
+            self.pause_btn.setText("Resume")
+        else:
+            self.pause_btn.setText("Pause")
