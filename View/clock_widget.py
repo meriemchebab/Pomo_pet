@@ -93,6 +93,7 @@ class QuickSetupDialog(QDialog):
         duration_minutes: float = 25,
         break_minutes: float = 5,
         pomo_until_break: int = 4,
+        long_break_minutes = 30,
         auto_start_next_phase: bool = False,
         parent=None,
     ):
@@ -122,6 +123,12 @@ class QuickSetupDialog(QDialog):
         self.break_spin.setSuffix(" min")
         self.break_spin.setDecimals(0)
         self.break_spin.setValue(break_minutes)
+        
+        self.long_break_spin = QDoubleSpinBox()
+        self.long_break_spin.setRange(1, 180)
+        self.long_break_spin.setSuffix(" min")
+        self.long_break_spin.setDecimals(0)
+        self.long_break_spin.setValue(long_break_minutes)
 
         self.pomo_spin = QSpinBox()
         self.pomo_spin.setRange(1, 12)
@@ -132,6 +139,7 @@ class QuickSetupDialog(QDialog):
 
         form.addRow("Work duration", self.duration_spin)
         form.addRow("Break duration", self.break_spin)
+        form.addRow("Long Break duration", self.long_break_spin)
         form.addRow("Pomodoros until long break", self.pomo_spin)
         form.addRow("", self.auto_start_check)
 
@@ -148,6 +156,7 @@ class QuickSetupDialog(QDialog):
         return {
             "duration": int(self.duration_spin.value() * 60),
             "break_time": int(self.break_spin.value() * 60),
+            "long_break_time": int(self.long_break_spin.value() * 60),
             "pomo_until_break": self.pomo_spin.value(),
             "auto_start_next_phase": self.auto_start_check.isChecked(),
         }
@@ -166,6 +175,7 @@ class ClockWidget(QFrame):
         self._cycle_index = 1
         self._cycle_total = 4
         self._break_seconds = 5 * 60
+        self._long_break_seconds = 30 * 60
         self._auto_start_next_phase = False
 
         root = QVBoxLayout(self)
@@ -313,9 +323,11 @@ class ClockWidget(QFrame):
         self.refresh()
 
     def open_quick_setup(self):
+        """open a dialog box to change the pomodoro session settings"""
         dialog = QuickSetupDialog(
             duration_minutes=self._total / 60,
             break_minutes=self._break_seconds / 60,
+            long_break_minutes= int(self._long_break_seconds / 60),
             pomo_until_break=self._cycle_total,
             auto_start_next_phase=self._auto_start_next_phase,
             parent=self,
@@ -327,9 +339,11 @@ class ClockWidget(QFrame):
             self.settings_requested.emit(values)
 
     def apply_settings(self, settings: dict):
+        """function to set the new prefered settings and update the UI , use after dialog box get closed"""
         self._total = int(settings["duration"])
         self._seconds = self._total
         self._break_seconds = int(settings["break_time"])
+        self._long_break_seconds = int(settings["long_break_time"])
         self._cycle_total = int(settings["pomo_until_break"])
         self._auto_start_next_phase = bool(settings["auto_start_next_phase"])
 
@@ -342,6 +356,7 @@ class ClockWidget(QFrame):
         self.refresh()
 
     def set_phase_info(self, phase_name: str, cycle_index: int, cycle_total: int):
+        """function to change phase labels , use when a phase changes """
         self._phase_name = phase_name
         self._cycle_index = cycle_index
         self._cycle_total = cycle_total
@@ -351,16 +366,24 @@ class ClockWidget(QFrame):
         self.face.update()
 
     def set_duration(self, seconds: int):
+        """update the clock to full time at the start of each phase , use when a new phase starts"""
         self._total = max(1, seconds)
         self._seconds = max(0, seconds)
         self.refresh()
 
     def set_remaining(self, seconds: int):
+        """call each second to update the clock circle"""
         self._seconds = max(0, seconds)
         self.refresh()
 
     def refresh(self):
+        """update the clock numbers not the UI"""
         mins, secs = divmod(self._seconds, 60)
         self.face.remaining_text = f"{mins:02d}:{secs:02d}"
         self.face.progress = 1 - (self._seconds / max(1, self._total))
         self.face.update()
+# New user preferences from dialog → apply_settings()
+
+# Phase switched from work to break → set_phase_info() + set_duration()
+
+# Timer ticking each second → set_remaining()
