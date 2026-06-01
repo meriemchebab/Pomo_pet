@@ -13,34 +13,34 @@ class ClockSettings(QObject):
     # use default pomodoro settings if not set 
     # to do : add white noise settings and sounds too , dont use it in the UI of the clock
     
-    def __init__(self, duration: float = 25 * 60,
-                  break_time: float = 5 * 60,
+    def __init__(self, duration: int = 25 * 60,
+                  break_time: int = 5 * 60,
                     pomo_until_break: int = 4 ,
-                    long_break_time : float = 30 * 60,
+                    long_break_time : int = 30 * 60,
                     auto_start_next_phase: bool = False):
         super().__init__()
-        self._duration = float(duration)
-        self._break_time = float(break_time)
+        self._duration = int(duration)
+        self._break_time = int(break_time)
         self._pomo_until_break = int(pomo_until_break)
         self._auto_start_next_phase = bool(auto_start_next_phase)
-        self._long_break_time = float(long_break_time)
+        self._long_break_time = int(long_break_time)
     @property
-    def duration(self) -> float:
+    def duration(self) -> int:
         return self._duration
 
     @duration.setter
-    def duration(self, value: float):
-        value = float(value)
+    def duration(self, value: int):
+        value = int(value)
         if value != self._duration:
             self._duration = value      
 
     @property
-    def break_time(self) -> float:
+    def break_time(self) -> int:
         return self._break_time
 
     @break_time.setter
-    def break_time(self, value: float):
-        value = float(value)
+    def break_time(self, value: int):
+        value = int(value)
         if value != self._break_time:
             self._break_time = value
             
@@ -66,12 +66,12 @@ class ClockSettings(QObject):
             self._auto_start_next_phase = value
 
     @property
-    def long_break_time(self) -> float:
+    def long_break_time(self) -> int:
         return self._long_break_time
     
     @long_break_time.setter
-    def long_break_time(self,value :float):
-        value = float(value)
+    def long_break_time(self,value :int):
+        value = int(value)
         if value != self._long_break_time:
             self._long_break_time = value
     
@@ -79,7 +79,7 @@ class ClockSettings(QObject):
         """this method updates the clock settings , will be called for the general settings and the clock settings"""
         self._duration = values["duration"]
         self._break_time = values["break_time"]
-        self._break_time = values["long_break_time"]
+        self._long_break_time = values["long_break_time"]
         self._pomo_until_break = values["pomo_until_break"]
         self._auto_start_next_phase = values["auto_start_next_phase"]
 
@@ -97,7 +97,7 @@ class Clock(QObject):
         self.time_passed = 0
         self.elapsed = 0
         self.phase = Phase.WORK
-        self._completed_pomos = 0
+        self.completed_pomos = 0
     def start(self):
         if not self.timer.isActive():
             if self.time_left <= 0:
@@ -151,8 +151,8 @@ class Clock(QObject):
     def pomo_end(self):
         self.pause()
         if self.phase == Phase.WORK:
-            self._completed_pomos += 1
-            if self._completed_pomos % self.settings.pomo_until_break == 0:
+            self.completed_pomos += 1
+            if self.completed_pomos % self.settings.pomo_until_break == 0:
                 self.phase = Phase.LONG_BREAK
                 self.time_left = int(self.settings.break_time * 3)
             else:
