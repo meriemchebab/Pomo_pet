@@ -108,21 +108,23 @@ class Clock(QObject):
         if self.timer.isActive():
             self.timer.stop()
 
-    def reset_timer(self,phase : Optional[Phase] = None):
-        """the reset function will restart the timer on demand , use it when the user choose to start a specific phase 'ex : skip to break..' or just basic reset"""
+    def reset_timer(self):
+        """the reset function will restart the timer on demand """
         self.pause()
         self.time_focused.emit(self.time_passed) #emit the focused time to add it in general time passed in the session 
         self.time_passed = 0
         self.elapsed = 0
         # behavior when the reset is simple 
-        if phase == None and self.phase == Phase.WORK : # a simple reset for the timer while focused
+        if self.phase == Phase.WORK : # a simple reset for the timer while focused
             self.time_left = int(self.settings.duration)
-        if phase == None and self.phase == Phase.LONG_BREAK : # a simple reset for the timer while long break
+        if self.phase == Phase.LONG_BREAK : # a simple reset for the timer while long break
             self.time_left = int(self.settings.long_break_time)
-        if phase == None and self.phase == Phase.SHORT_BREAK : # a simple reset for the timer while break
+        if self.phase == Phase.SHORT_BREAK : # a simple reset for the timer while break
             self.time_left = int(self.settings.break_time)
-
+        self.start()
         # behavior when i need to change the phase and restart 
+    def change_phase(self, phase : Phase):
+        """manual changing of phase"""
         if phase != self.phase:
             self.phase = phase
             self.phase_changed.emit(self.phase)
@@ -132,10 +134,7 @@ class Clock(QObject):
                 self.time_left = int(self.settings.long_break_time)
             if phase == Phase.SHORT_BREAK:
                 self.time_left = int(self.settings.break_time)
-
-                
-        self.time_remaining.emit(self.time_left)
-        self.start() 
+ 
     @Slot()
     def _tick(self):
         self.time_left -= 1
@@ -152,9 +151,10 @@ class Clock(QObject):
         self.pause()
         if self.phase == Phase.WORK:
             self.completed_pomos += 1
+            self.time_focused.emit(self.time_passed) #emit the focused time 
             if self.completed_pomos % self.settings.pomo_until_break == 0:
                 self.phase = Phase.LONG_BREAK
-                self.time_left = int(self.settings.break_time * 3)
+                self.time_left = int(self.settings.long_break_time)
             else:
                 self.phase = Phase.SHORT_BREAK
                 self.time_left = int(self.settings.break_time)
