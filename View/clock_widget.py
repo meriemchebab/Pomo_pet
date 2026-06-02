@@ -377,17 +377,11 @@ class ClockWidget(QFrame):
             self.focus_sessions_label.setText(f"{self._completed_sessions} sessions completed")
 
     def set_focus_stats(self, focused_seconds: int, completed_sessions: int):
-        self._focused_today_seconds = max(0, focused_seconds)
+        """set the focus time label"""
+        self._focused_today_seconds += max(0, focused_seconds)
         self._completed_sessions = max(0, completed_sessions)
         self.refresh_focus_stats()
 
-    def add_focused_time(self, seconds: int):
-        self._focused_today_seconds += max(0, seconds)
-        self.refresh_focus_stats()
-
-    def increment_completed_sessions(self):
-        self._completed_sessions += 1
-        self.refresh_focus_stats()
 
     def reset_focus_stats(self):
         self._focused_today_seconds = 0
