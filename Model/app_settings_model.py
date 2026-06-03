@@ -1,24 +1,105 @@
-from PySide6.QtCore import QObject
-from typing import Optional
-from clock_model import ClockSettings
+from dataclasses import dataclass, field
+from typing     import ClassVar, Dict
+from pathlib    import Path
+import json
 
-class SoundSettings(QObject):
-    def __init__(self, parent = None):
-        super().__init__()
-        # attributs of the settings of white noise and sounds 
-        self.white_noise_list = ""
-        self.sound_on_finish = ""
-        self.sound_on_break = ""
-        self.volume = 0
-        self.auto_play = False
-        # here put the methods that will update the sound and volum too 
-class ThemeSettings(QObject):
-    def __init__(self, parent = None):
-        super().__init__()
-        # put the attribut of themes files that you can laod and stuff like this 
-class AppSettings(QObject):
-    def __init__(self, parent = None):
-        super().__init__()
-        self.clock_settings = ClockSettings() # this one will presist and get saved to the db
-        self.sound_settings = SoundSettings()
-        self.theme_settings = ThemeSettings()
+@dataclass
+class SoundTrack:
+    enabled: bool  = False
+    volume:  float = 0.5
+
+@dataclass
+class SoundSettings:
+    master_volume:      float = 0.6
+    auto_play_on_focus: bool  = True
+    white_noise: Dict[str, SoundTrack] = field(default_factory=lambda: {
+        "rain":        SoundTrack(enabled=True,  volume=0.7),
+        "forest_wind": SoundTrack(enabled=False, volume=0.5),
+        "ocean":       SoundTrack(enabled=False, volume=0.5),
+        "fireplace":   SoundTrack(enabled=False, volume=0.5),
+        "cafe":        SoundTrack(enabled=False, volume=0.5),
+    })
+
+    def effective_volume(self, name: str) -> float:
+        t = self.white_noise[name]
+        return self.master_volume * t.volume if t.enabled else 0.0
+
+@dataclass
+class TimerSettings:
+    work_duration:    int  = 25 * 60
+    short_break:      int  = 5  * 60
+    long_break:       int  = 15 * 60
+    auto_start_break: bool = True
+
+@dataclass
+class AppSettings:
+    clock: TimerSettings = field(default_factory=TimerSettings)
+    sound: SoundSettings = field(default_factory=SoundSettings)
+
+    PATH: ClassVar[Path] = Path("data/settings.json")
+
+    # ─read values from json 
+    @classmethod
+    def load(cls) -> "AppSettings":
+        if not cls.PATH.exists():
+            return cls()
+
+        data = json.loads(cls.PATH.read_text())
+        c    = data.get("clock", {})
+        s    = data.get("sound", {})
+        raw  = s.get("white_noise", {})
+
+        defaults = SoundSettings().white_noise
+        tracks = {
+            name: SoundTrack(
+                enabled = raw.get(name, {}).get("enabled", d.enabled),
+                volume  = raw.get(name, {}).get("volume",  d.volume),
+            )
+            for name, d in defaults.items()
+        }
+
+        return cls(
+            clock = TimerSettings(
+                work_duration    = c.get("work_duration",    25*60),
+                short_break      = c.get("short_break",       5*60),
+                long_break       = c.get("long_break",        15*60),
+                auto_start_break = c.get("auto_start_break",  True),
+            ),
+            sound = SoundSettings(
+                master_volume      = s.get("master_volume",      0.6),
+                auto_play_on_focus = s.get("auto_play_on_focus", True),
+                white_noise        = tracks,
+            )
+        )
+
+    # write to the json file 
+    def save(self) -> None:
+        self.PATH.parent.mkdir(parents=True, exist_ok=True)
+        self.PATH.write_text(json.dumps(self._to_dict(), indent=2))
+    # helper function returns dict
+    def _to_dict(self) -> dict:
+        return {
+            "clock": {
+                "work_duration":    self.clock.work_duration,
+                "short_break":      self.clock.short_break,
+                "long_break":       self.clock.long_break,
+                "auto_start_break": self.clock.auto_start_break,
+            },
+            "sound": {
+                "master_volume":      self.sound.master_volume,
+                "auto_play_on_focus": self.sound.auto_play_on_focus,
+                "white_noise": {
+                    name: {"enabled": t.enabled, "volume": t.volume}
+                    for name, t in self.sound.white_noise.items()
+                }
+            }
+        }
+
+    # ── update helpers ──
+    def update(self, section: str, field: str, value) -> None:
+        setattr(getattr(self, section), field, value)
+        self.save()
+
+    def update_track(self, name: str, field: str, value) -> None:
+        setattr(self.sound.white_noise[name], field, value)
+        self.save()
