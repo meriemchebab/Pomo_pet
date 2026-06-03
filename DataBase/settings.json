@@ -1,0 +1,31 @@
+{
+  "timer": {
+    "work_duration": 1500,
+    "short_break": 300,
+    "long_break": 900,
+    "pomo_until_break": 4,
+    "auto_start_breaks": false
+  },
+  "sounds": {
+    "master_volume": 0.6,
+    "auto_play_on_focus": true,
+    "auto_pause_on_break": false,
+    "white_noise": {
+      "rain": { "enabled": true, "volume": 0.7 },
+      "forest_wind": { "enabled": true, "volume": 0.4 },
+      "ocean": { "enabled": false, "volume": 0.5 },
+      "fireplace": { "enabled": false, "volume": 0.5 },
+      "cafe": { "enabled": false, "volume": 0.5 }
+    },
+    "sound_on_start": ["pomodoro_start", "forest_bell", "soft_chime"],
+    "sound_on_break": ["break_start", "wood_ping", "water_drop"],
+    "sound_on_finish": ["pomodoro_finish", "victory_tone", "bell_ring"]
+  },
+  "theme": {
+    "mode": "light",
+    "primary_color": "#5D8FFC",
+    "accent_color": "#FFB86C",
+    "background_color": "#F5F7FF",
+    "text_color": "#1F2937"
+  }
+}
