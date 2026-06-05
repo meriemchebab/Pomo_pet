@@ -15,13 +15,31 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
-from .theme import PALETTE
+from .theme import ThemeBuilder
 
+from PySide6.QtWidgets import QPushButton
+from PySide6.QtGui import QIcon
+class HoverButton(QPushButton):
+    def __init__(self,text : str , icon_path :str):
+        super().__init__()
+        self._text = text
+        self._icon_path = icon_path
+    def enterEvent(self, event):
+        self.setText(self._text)
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setText("")
+        super().leaveEvent(event)
+    def set_icon(self):
+        self.setIcon(QIcon(self._icon_path))
+        self.setIconSize(QSize(20,20))
 
 class AnalogTimerFace(QWidget):
     def __init__(self, parent=None):
@@ -29,10 +47,13 @@ class AnalogTimerFace(QWidget):
         self.progress = 0.0
         self.remaining_text = "25:00"
         self.phase_text = "Focus time"
-        self.setMinimumSize(300, 300)
+        self.theme = ThemeBuilder()
+        self.setMinimumSize(220, 220)
+        self.setMaximumSize(520, 520)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     def sizeHint(self):
-        return QSize(320, 320)
+        return QSize(260, 260)
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -56,7 +77,7 @@ class AnalogTimerFace(QWidget):
         p.setPen(track_pen)
         p.drawArc(circle.adjusted(8, 8, -8, -8), 0, 360 * 16)
 
-        arc_pen = QPen(QColor(PALETTE["accent_dark"]), 12)
+        arc_pen = QPen(QColor(self.theme.palette["accent_dark"]), 12)
         arc_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         p.setPen(arc_pen)
         p.drawArc(circle.adjusted(8, 8, -8, -8), 90 * 16, int(-360 * self.progress * 16))
@@ -79,7 +100,7 @@ class AnalogTimerFace(QWidget):
         phase_rect = circle.adjusted(0, side * 0.18, 0, 0)
         p.drawText(phase_rect, Qt.AlignmentFlag.AlignHCenter, self.phase_text)
 
-        p.setPen(QColor(PALETTE["text"]))
+        p.setPen(QColor(self.theme.palette["text"]))
         time_font = QFont(p.font())
         time_font.setPointSize(26)
         time_font.setBold(True)
@@ -168,6 +189,9 @@ class ClockWidget(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("panelCard")
+        self.setMinimumHeight(360)
+        self.setMaximumHeight(820)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
 
         self._seconds = 25 * 60
         self._total = 25 * 60
@@ -185,11 +209,9 @@ class ClockWidget(QFrame):
         root.setContentsMargins(20, 20, 20, 20)
         root.setSpacing(14)
 
-        self.phase_label = QLabel(self._phase_name)
-        self.phase_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.phase_label.setObjectName("phaseLabel")
+        
 
-        self.cycle_label = QLabel(f"Work {self._cycle_index} of {self._cycle_total}")
+        self.cycle_label = QLabel(f"{self._cycle_index} / {self._cycle_total}")
         self.cycle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.cycle_label.setObjectName("cycleLabel")
 
@@ -228,39 +250,42 @@ class ClockWidget(QFrame):
         self.start_btn = QPushButton("Start")
         self.start_btn.setObjectName("accentButton")
 
-        self.pause_btn = QPushButton("Pause")
-        self.pause_btn.setObjectName("secondaryButton")
-        self.pause_btn.setCheckable(True)
-        self.pause_btn.toggled.connect(self._on_pause_toggled)
-
-        self.reset_btn = QPushButton("Reset")
-        self.reset_btn.setObjectName("secondaryButton")
-
         controls.addWidget(self.start_btn)
-        controls.addWidget(self.pause_btn)
-        controls.addWidget(self.reset_btn)
 
-        presets = QGridLayout()
-        presets.setHorizontalSpacing(10)
-        presets.setVerticalSpacing(10)
 
-        self.skip_btn = QPushButton("Skip")
-        self.quick_setup_btn = QPushButton("Quick Setup")
+        presets = QHBoxLayout()
+        presets.setSpacing(8)
+        presets.setContentsMargins(0, 0, 0, 10)
+        self.pause_btn = QPushButton("Pause")
+        self.pause_btn.setIcon(QIcon("assets/pause.png"))
+        self.pause_btn.setObjectName("softButton")
+        self.pause_btn.setFixedSize(76, 40)
+        self.skip_btn = HoverButton("Skip", "assets/skip.png")
+        self.reset_btn = HoverButton("Reset", "assets/reset.png")
 
-        for btn in [self.skip_btn, self.quick_setup_btn]:
+        for btn in [self.skip_btn, self.reset_btn]:
+            btn.set_icon()
             btn.setObjectName("softButton")
-            btn.setMinimumHeight(38)
+            btn.setFixedSize(76, 40)
+        
 
-        presets.addWidget(self.skip_btn, 1, 1)
-        presets.addWidget(self.quick_setup_btn, 2, 0, 1, 2)
-
-        root.addWidget(self.phase_label)
-        root.addWidget(self.cycle_label)
+        presets.addWidget(self.pause_btn)
+        presets.addWidget(self.skip_btn)
+        presets.addWidget(self.reset_btn)
+        presets.addStretch()
+        
+        self.quick_setup_btn = HoverButton("quik setup","assets/clock.png")
+        self.quick_setup_btn.set_icon()
+        # root.addWidget(self.phase_label)
+        root.addLayout(presets ,Qt.AlignmentFlag.AlignLeft)
+        root.addWidget(self.stats_card)
+        root.addWidget(self.cycle_label,alignment=Qt.AlignmentFlag.AlignLeft)
         root.addWidget(self.face, alignment=Qt.AlignmentFlag.AlignCenter)
         root.addWidget(self.meta_label)
-        root.addWidget(self.stats_card)
         root.addLayout(controls)
-        root.addLayout(presets)
+        root.addWidget(self.quick_setup_btn)
+        
+        
 
         self.quick_setup_btn.clicked.connect(self.open_quick_setup)
 
@@ -270,26 +295,32 @@ class ClockWidget(QFrame):
                 background: #fbf7ee;
                 border: 1px solid #e4dcc8;
                 border-radius: 20px;
+                min-height: 400px;
+                max-height: 780px;
+                min-width: 340px;
+                max-width: 760px;
             }
             QLabel#phaseLabel {
                 color: #7d745f;
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 700;
             }
             QLabel#cycleLabel {
                 color: #2f2a22;
-                font-size: 24px;
+                font-size: 12px;
                 font-weight: 800;
             }
             QLabel#metaLabel {
                 color: #8a7f65;
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 600;
             }
             QFrame#statsCard {
                 background: #f6f0e3;
                 border: 1px solid #e4dac3;
                 border-radius: 16px;
+                max-height: 170px;
+                
             }
             QLabel#statTitle {
                 color: #7d745f;
@@ -299,7 +330,7 @@ class ClockWidget(QFrame):
             }
             QLabel#statValue {
                 color: #2f2a22;
-                font-size: 22px;
+                font-size: 20px;
                 font-weight: 800;
             }
             QLabel#statMeta {
@@ -313,10 +344,10 @@ class ClockWidget(QFrame):
                 margin-bottom: 6px;
             }
             QPushButton {
-                min-height: 44px;
-                border-radius: 12px;
-                padding: 10px 14px;
-                font-size: 14px;
+                min-height: 20px;
+                border-radius: 10px;
+                padding: 8px 8px;
+                font-size: 13px;
                 font-weight: 700;
                 border: 1px solid #d8cfb9;
                 background: #f4eedf;
@@ -344,7 +375,7 @@ class ClockWidget(QFrame):
                 background: #fcf9f1;
             }
             QDoubleSpinBox, QSpinBox {
-                min-height: 36px;
+                min-height: 20px;
                 border: 1px solid #d7ceb8;
                 border-radius: 10px;
                 padding: 4px 8px;
@@ -414,7 +445,7 @@ class ClockWidget(QFrame):
 
         self._cycle_index = 1
         self._phase_name = "Focus time"
-        self.phase_label.setText(self._phase_name)
+        
         self.cycle_label.setText(f"Work {self._cycle_index} of {self._cycle_total}")
         self.meta_label.setText(f"Next break {self._break_seconds // 60:02d}:00")
         self.face.phase_text = self._phase_name
@@ -425,8 +456,8 @@ class ClockWidget(QFrame):
         self._phase_name = phase_name
         self._cycle_index = cycle_index
         self._cycle_total = cycle_total
-        self.phase_label.setText(phase_name)
-        self.cycle_label.setText(f"Work {cycle_index} of {cycle_total}")
+        
+        self.cycle_label.setText(f"{cycle_index} / {cycle_total}")
         self.face.phase_text = phase_name
         self.face.update()
 
@@ -452,5 +483,6 @@ class ClockWidget(QFrame):
         """update pause button text based on checked state"""
         if checked:
             self.pause_btn.setText("Resume")
+            
         else:
             self.pause_btn.setText("Pause")
