@@ -24,11 +24,11 @@ PALETTES: Dict[str, Dict[str, str]] = {
         'panel':        '#1a2e24',
         'panel_dark':   '#142318',
         'panel_mid':    '#1f3528',
-        'panel_light':  '#223320',
+        'panel_light':  "#487143",
         'line':         '#2e4a38',
         'text':         '#d4cdb8',
         'muted':        '#7a8c7e',
-        'accent':       '#6aab64',
+        'accent':       "#68C260",
         'accent_dark':  '#4a8a44',
         'accent_soft':  '#8fcc7a',
         'danger':       '#c0714a',
@@ -39,11 +39,12 @@ PALETTES: Dict[str, Dict[str, str]] = {
         'panel':        '#1a1a2e',
         'panel_dark':   '#16213e',
         'panel_mid':    '#0f3460',
-        'panel_light':  '#1a1a2e',
+        'panel_light':  "#5252a5",
         'line':         '#533483',
         'text':         '#e0e0ff',
         'muted':        '#8888aa',
         'accent':       '#7b2fff',
+        'secondary_button' :"#ae80ffff",
         'accent_dark':  '#5a1fcc',
         'accent_soft':  '#b57bee',
         'danger':       '#ff4466',
@@ -56,12 +57,12 @@ AVAILABLE_THEMES: list[str] = list(PALETTES.keys())
 # ["Forest Light", "Forest Dark", "Pixel Night"]
 
 # backward-compatible single-palette export for modules that import `PALETTE`
-PALETTE: Dict[str, str] = PALETTES["Forest Light"]
+PALETTE: Dict[str, str] = PALETTES["Forest Dark"]
 
 # call themebuilder in the main window UI so you can change the theme 
 class ThemeBuilder():
     def __init__(self,parent = None):
-        self.current_theme = "Forest Light"
+        self.current_theme = "Forest Dark"
     @property
     # helper to get the current palette theme
     def palette(self) -> Dict[str, str]:
@@ -148,11 +149,11 @@ class ThemeBuilder():
     }}
     QSlider::groove:horizontal {{
         height: 8px;
-        background: {p['panel']};
+        background: {p['accent_soft']};
         border-radius: 4px;
     }}
     QSlider::handle:horizontal {{
-        background: {p['accent']};
+        background: {p['panel_mid']};
         width: 16px;
         margin: -4px 0;
         border-radius: 8px;

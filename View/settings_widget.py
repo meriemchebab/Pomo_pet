@@ -6,7 +6,39 @@ from PySide6.QtWidgets import (
     QSpinBox, QCheckBox, QComboBox, QSlider
 )
 from .theme import AVAILABLE_THEMES
+class MasterVolumeRow(QFrame):
+    def __init__(self, value=60, parent=None):
+        super().__init__(parent)
+        self.setObjectName("soundRow")
 
+        root = QHBoxLayout(self)
+        root.setContentsMargins(12, 10, 12, 10)
+        root.setSpacing(10)
+
+        self.icon_label = QLabel("🔊")
+        self.icon_label.setObjectName("iconBox")
+        self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.icon_label.setFixedSize(34, 34)
+
+        self.title_label = QLabel("Master")
+        self.title_label.setObjectName("rowTitle")
+        self.title_label.setFixedWidth(72)
+
+        self.slider = QSlider(Qt.Orientation.Horizontal)
+        self.slider.setObjectName("soundSlider")
+        self.slider.setRange(0, 100)
+        self.slider.setValue(value)
+
+        self.value_label = QLabel(f"{value}%")
+        self.value_label.setObjectName("percentLabel")
+        self.value_label.setFixedWidth(34)
+
+        self.slider.valueChanged.connect(lambda v: self.value_label.setText(f"{v}%"))
+
+        root.addWidget(self.icon_label)
+        root.addWidget(self.title_label)
+        root.addWidget(self.slider, 1)
+        root.addWidget(self.value_label)
 # the change in settings here is saved in the database while the quick setup is just for a session
 class SettingsWidget(QFrame):
     timer_changed = Signal(str, int)

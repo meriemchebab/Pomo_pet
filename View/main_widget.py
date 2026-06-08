@@ -5,6 +5,8 @@ from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QPushButton,
     QSizePolicy, QStackedWidget, QVBoxLayout, QWidget,
 )
+from PySide6.QtGui import QIcon,QPixmap
+from .theme import ThemeBuilder
 SIDEBAR_OPEN      = 190
 SIDEBAR_COLLAPSED = 50
 ANIM_MS           = 220
@@ -25,10 +27,20 @@ class NavItem(QWidget):
         row.setContentsMargins(10, 8, 10, 8)
         row.setSpacing(9)
 
-        self._icon = QLabel(icon)
+        self._icon = QLabel()
         self._icon.setObjectName("niIcon")
-        self._icon.setFixedWidth(20)
+        self._icon.setFixedSize(22, 22)
         self._icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        pix = QPixmap(icon)
+        self._icon.setPixmap(
+            pix.scaled(
+                18,
+                18,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+        )
+    )
 
         self._label = QLabel(label)
         self._label.setObjectName("niLabel")
@@ -86,9 +98,10 @@ class Sidebar(QFrame):
         self._logo.setObjectName("sbLogo")
         top_row.addWidget(self._logo, stretch=1)
 
-        self._tog = QPushButton("◀")
+        self._tog = QPushButton("")
+        self._tog.setIcon(QIcon("assets/clock.png"))
         self._tog.setObjectName("sbToggle")
-        self._tog.setFixedSize(24, 24)
+        self._tog.setFixedSize(36, 36)
         self._tog.clicked.connect(self.toggle)
         top_row.addWidget(self._tog)
 
@@ -100,14 +113,20 @@ class Sidebar(QFrame):
         self._nav_layout = QVBoxLayout(nav)
         self._nav_layout.setContentsMargins(6, 8, 6, 8)
         self._nav_layout.setSpacing(3)
-
+        icons = {
+        "forest": "assets/forest.png",
+        "pet": "assets/pet.png",
+        "projects": "assets/projects.png",
+        "sounds": "assets/sound.png",
+        "settings": "assets/settings.png",
+                }
         tabs = [
-            ("forest",   "🌲", "Forest",   ""),
-            ("pet",      "🍅", "Pet",      ""),
-            ("projects", "📋", "Projects", ""),
-            ("sounds",   "🎵", "Sounds",   ""),
-            ("settings", "⚙",  "Settings", ""),
-        ]
+    ("forest", icons["forest"], "Forest", ""),
+    ("pet", icons["pet"], "Pet", ""),
+    ("projects", icons["projects"], "Projects", ""),
+    ("sounds", icons["sounds"], "Sounds", ""),
+    ("settings", icons["settings"], "Settings", ""),
+]
         for key, icon, label, badge in tabs:
             item = NavItem(icon, label, badge)
             item.clicked.connect(lambda k=key: self._on_click(k))
@@ -115,6 +134,7 @@ class Sidebar(QFrame):
             self._items[key] = item
 
         self._nav_layout.addStretch()
+        self._nav_layout.addSpacing(8)
         root.addWidget(nav, stretch=1)
 
         # animation
@@ -158,56 +178,89 @@ class Sidebar(QFrame):
         return d
 
     def _apply_style(self):
-        self.setStyleSheet("""
-        QFrame#Sidebar {
-            background: #0f2a1c;
-            border: 1px solid rgba(255,255,255,0.07);
+        theme = ThemeBuilder()
+        p = theme.palette
+        self.setStyleSheet(f"""
+        /* Sidebar: Dark panel background with border */
+        QFrame#Sidebar {{
+            background: {p['panel_dark']};
+            border: 1px solid {p['line']};
             border-radius: 14px;
-        }
-        QFrame#sbTop {
+        }}
+        /* Top section: logo + toggle */
+        QFrame#sbTop {{
             background: transparent;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        QFrame#sbDiv {
-            background: rgba(255,255,255,0.06);
+            border-bottom: 1px solid {p['line']};
+        }}
+        /* Divider line */
+        QFrame#sbDiv {{
+            background: {p['line']};
             border: none;
-        }
-        QLabel#sbLogo {
-            font-size: 11px; font-weight: 700;
-            color: #d0e8c0; letter-spacing: 0.5px;
-        }
-        QPushButton#sbToggle {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.09);
-            border-radius: 6px; font-size: 10px;
-            color: rgba(180,210,160,0.5);
-        }
-        QPushButton#sbToggle:hover {
-            background: rgba(255,255,255,0.10);
-            color: #d0e8c0;
-        }
-        QWidget#NavItem {
+        }}
+        /* Logo text */
+        QLabel#sbLogo {{
+            font-size: 11px;
+            font-weight: 700;
+            color: {p['accent_soft']};
+            letter-spacing: 0.5px;
+        }}
+        /* Toggle button (collapse/expand) */
+        QPushButton#sbToggle {{
+            background: {p['panel_mid']};
+            border: 1px solid {p['line']};
+            border-radius: 6px;
+            font-size: 10px;
+            color: {p['muted']};
+        }}
+        QPushButton#sbToggle:hover {{
+            background: {p['panel_light']};
+            color: {p['accent']};
+        }}
+        /* Navigation item: base styles */
+        QWidget#NavItem {{
             border-radius: 9px;
             border: 1px solid transparent;
-        }
-        QWidget#NavItem:hover { background: rgba(255,255,255,0.05); }
-        QWidget#NavItem[active=true] {
-            background: #2d5224;
-            border-color: rgba(138,184,96,0.2);
-        }
-        QLabel#niIcon  { font-size: 15px; }
-        QLabel#niLabel {
-            font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
-            color: rgba(180,210,160,0.45);
-        }
-        QWidget#NavItem[active=true] QLabel#niLabel { color: #d0e8c0; }
-        QWidget#NavItem:hover       QLabel#niLabel { color: rgba(180,210,160,0.8); }
-        QLabel#niBadge {
-            font-size: 8px; font-weight: 700; color: #8ab860;
-            background: rgba(138,184,96,0.12);
-            border: 1px solid rgba(138,184,96,0.2);
-            border-radius: 8px; padding: 1px 5px;
-        }
+        }}
+        QWidget#NavItem:hover {{
+            background: {p['panel_mid']};
+        }}
+        /* Navigation item: active state */
+        QWidget#NavItem[active=true] {{
+            background: {p['panel_mid']};
+            border-color: {p['accent']};
+        }}
+        /* Icon in nav item */
+        QLabel#niIcon {{
+            font-size: 15px;
+        }}
+        /* Label in nav item */
+        QLabel#niLabel {{
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: {p['muted']};
+        }}
+        QWidget#NavItem {{
+        border-radius: 9px;
+        border: 1px solid transparent;
+        padding-left: 6px;
+        }}
+        QWidget#NavItem[active=true] QLabel#niLabel {{
+            color: {p['accent']};
+        }}
+        QWidget#NavItem:hover QLabel#niLabel {{
+            color: {p['accent_soft']};
+        }}
+        /* Badge: task/notification count */
+        QLabel#niBadge {{
+            font-size: 8px;
+            font-weight: 700;
+            color: {p['white']};
+            background: {p['accent']};
+            border: 1px solid {p['accent_dark']};
+            border-radius: 8px;
+            padding: 1px 5px;
+        }}
         """)
 
 
@@ -262,11 +315,15 @@ class MainWindow(QWidget):
         self.sidebar.set_badge(key, text)
 
     def _apply_style(self):
-        self.setStyleSheet("""
-        MainWindow { background: #0e2318; }
-        QStackedWidget#MainStack {
-            background: #1a3228;
-            border: 1px solid rgba(255,255,255,0.07);
+        theme = ThemeBuilder()
+        p = theme.palette
+        self.setStyleSheet(f"""
+        MainWindow {{
+            background: {p['bg']};
+        }}
+        QStackedWidget#MainStack {{
+            background: {p['panel']};
+            border: 1px solid {p['line']};
             border-radius: 14px;
-        }
+        }}
         """)

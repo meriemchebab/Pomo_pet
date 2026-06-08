@@ -68,21 +68,25 @@ class AnalogTimerFace(QWidget):
             side,
         )
 
+        # Use theme palette for timer face colors
         p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(QColor("#f2ead7"))
+        p.setBrush(QColor(self.theme.palette["panel_light"]))
         p.drawEllipse(circle)
 
-        track_pen = QPen(QColor("#d8cfb5"), 10)
+        # Track background
+        track_pen = QPen(QColor(self.theme.palette["muted"]), 10)
         track_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         p.setPen(track_pen)
         p.drawArc(circle.adjusted(8, 8, -8, -8), 0, 360 * 16)
 
+        # Progress arc (uses accent_dark for visual contrast)
         arc_pen = QPen(QColor(self.theme.palette["accent_dark"]), 12)
         arc_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         p.setPen(arc_pen)
         p.drawArc(circle.adjusted(8, 8, -8, -8), 90 * 16, int(-360 * self.progress * 16))
 
-        tick_pen = QPen(QColor("#9b9075"), 2)
+        # Hour ticks
+        tick_pen = QPen(QColor(self.theme.palette["muted"]), 2)
         p.setPen(tick_pen)
         for i in range(12):
             angle = radians(i * 30 - 90)
@@ -92,7 +96,8 @@ class AnalogTimerFace(QWidget):
             y2 = circle.center().y() + sin(angle) * (side * 0.42)
             p.drawLine(int(x1), int(y1), int(x2), int(y2))
 
-        p.setPen(QColor("#8a7f65"))
+        # Phase label (e.g., "Focus time")
+        p.setPen(QColor(self.theme.palette["muted"]))
         phase_font = QFont(p.font())
         phase_font.setPointSize(11)
         phase_font.setWeight(QFont.Weight.DemiBold)
@@ -100,6 +105,7 @@ class AnalogTimerFace(QWidget):
         phase_rect = circle.adjusted(0, side * 0.18, 0, 0)
         p.drawText(phase_rect, Qt.AlignmentFlag.AlignHCenter, self.phase_text)
 
+        # Remaining time (e.g., "25:00")
         p.setPen(QColor(self.theme.palette["text"]))
         time_font = QFont(p.font())
         time_font.setPointSize(26)
@@ -188,6 +194,7 @@ class ClockWidget(QFrame):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.theme = ThemeBuilder()
         self.setObjectName("panelCard")
         self.setMinimumHeight(360)
         self.setMaximumHeight(820)
@@ -275,6 +282,7 @@ class ClockWidget(QFrame):
         presets.addStretch()
         
         self.quick_setup_btn = HoverButton("quik setup","assets/clock.png")
+        self.quick_setup_btn.setObjectName("softButton")
         self.quick_setup_btn.set_icon()
         # root.addWidget(self.phase_label)
         root.addLayout(presets ,Qt.AlignmentFlag.AlignLeft)
@@ -289,106 +297,120 @@ class ClockWidget(QFrame):
 
         self.quick_setup_btn.clicked.connect(self.open_quick_setup)
 
+        self._apply_style()
+        self.refresh_focus_stats()
+        self.refresh()
+
+    def _apply_style(self):
+        """Generate stylesheet using theme palette for consistency."""
+        p = self.theme.palette
         self.setStyleSheet(
-            """
-            QFrame#panelCard {
-                background: #fbf7ee;
-                border: 1px solid #e4dcc8;
+            f"""
+            /* Main card styling */
+            QFrame#panelCard {{
+                background: {p['panel']};
+                border: 1px solid {p['line']};
                 border-radius: 20px;
                 min-height: 400px;
                 max-height: 780px;
                 min-width: 280px;
-            }
-            QLabel#phaseLabel {
-                color: #7d745f;
-                font-size: 13px;
-                font-weight: 700;
-            }
-            QLabel#cycleLabel {
-                color: #2f2a22;
+            }}
+            /* Cycle indicator label */
+            QLabel#cycleLabel {{
+                color: {p['text']};
                 font-size: 12px;
                 font-weight: 800;
-            }
-            QLabel#metaLabel {
-                color: #8a7f65;
+            }}
+            /* Meta information label */
+            QLabel#metaLabel {{
+                color: {p['muted']};
                 font-size: 12px;
                 font-weight: 600;
-            }
-            QFrame#statsCard {
-                background: #f6f0e3;
-                border: 1px solid #e4dac3;
+            }}
+            /* Stats card container */
+            QFrame#statsCard {{
+                background: {p['panel']};
+                border: 1px solid {p['line']};
                 border-radius: 16px;
                 max-height: 170px;
-                
-            }
-            QLabel#statTitle {
-                color: #7d745f;
+            }}
+            /* Stat title (e.g., "Focused today") */
+            QLabel#statTitle {{
+                color: {p['muted']};
                 font-size: 12px;
                 font-weight: 700;
                 letter-spacing: 0.4px;
-            }
-            QLabel#statValue {
-                color: #2f2a22;
+            }}
+            /* Stat main value (e.g., "3h 25m") */
+            QLabel#statValue {{
+                color: {p['text']};
                 font-size: 20px;
                 font-weight: 800;
-            }
-            QLabel#statMeta {
-                color: #8a7f65;
+            }}
+            /* Stat meta (e.g., "5 sessions completed") */
+            QLabel#statMeta {{
+                color: {p['muted']};
                 font-size: 12px;
                 font-weight: 600;
-            }
-            QLabel#dialogIntro {
-                color: #6f6654;
+            }}
+            /* Dialog intro text */
+            QLabel#dialogIntro {{
+                color: {p['text']};
                 font-size: 13px;
                 margin-bottom: 6px;
-            }
-            QPushButton {
+            }}
+            /* Default button styling */
+            QPushButton {{
                 min-height: 20px;
                 border-radius: 10px;
                 padding: 8px 8px;
                 font-size: 13px;
                 font-weight: 700;
-                border: 1px solid #d8cfb9;
-                background: #f4eedf;
-                color: #2e2a22;
-            }
-            QPushButton:hover {
-                background: #eee6d3;
-            }
-            QPushButton#accentButton {
-                background: #7a5c2e;
-                color: white;
+                border: 1px solid {p['line']};
+                background: {p['panel_light']};
+                color: {p['text']};
+            }}
+            QPushButton:hover {{
+                background: {p['panel_mid']};
+            }}
+            /* Primary action button */
+            QPushButton#accentButton {{
+                background: {p['accent']};
+                color: {p['white']};
                 border: none;
-            }
-            QPushButton#accentButton:hover {
-                background: #694d24;
-            }
-            QPushButton#secondaryButton {
-                background: #f7f2e8;
-            }
-            QPushButton#softButton {
-                background: #f3ecdc;
-                color: #5e5442;
-            }
-            QDialog {
-                background: #fcf9f1;
-            }
-            QDoubleSpinBox, QSpinBox {
+            }}
+            QPushButton#accentButton:hover {{
+                background: {p['accent_dark']};
+            }}
+            /* Secondary button */
+            QPushButton#secondaryButton {{
+                background: {p['panel']};
+            }}
+            /* Soft/ghost button */
+            QPushButton#softButton {{
+                background: {p['panel_light']};
+                color: {p['text']};
+            }}
+            /* Dialog background */
+            QDialog {{
+                background: {p['panel_dark']};
+            }}
+            /* Number input fields */
+            QDoubleSpinBox, QSpinBox {{
                 min-height: 20px;
-                border: 1px solid #d7ceb8;
+                border: 1px solid {p['line']};
                 border-radius: 10px;
                 padding: 4px 8px;
-                background: white;
-            }
-            QCheckBox {
-                color: #3b352b;
+                background: {p['panel_light']};
+                color: {p['text']};
+            }}
+            /* Checkbox styling */
+            QCheckBox {{
+                color: {p['text']};
                 spacing: 8px;
-            }
+            }}
             """
         )
-
-        self.refresh_focus_stats()
-        self.refresh()
 
     def _format_focus_time(self, total_seconds: int) -> str:
         total_minutes = total_seconds // 60

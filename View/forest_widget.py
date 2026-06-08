@@ -10,6 +10,7 @@ from .theme import PALETTES, ThemeBuilder
 class ForestCanvas(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.theme = ThemeBuilder()
         self.setMinimumSize(420, 260)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setObjectName('greenCard')
@@ -47,8 +48,10 @@ class ForestCanvas(QFrame):
         if not self.map_pixmap.isNull():
             p.drawPixmap(rect, self.map_pixmap)
         else:
-            p.fillRect(rect, QColor('#7fba67'))
-            p.setPen(QPen(QColor('#2f5b36'), 3))
+            # Use theme accent_soft for grass background
+            p.fillRect(rect, QColor(self.theme.palette['accent_soft']))
+            # Use theme line color for grid
+            p.setPen(QPen(QColor(self.theme.palette['accent_dark']), 3))
             for y in range(rect.top(), rect.bottom(), 28):
                 p.drawLine(rect.left(), y, rect.right(), y)
 
@@ -69,33 +72,46 @@ class ForestCanvas(QFrame):
                 self._draw_plot(p, cell, state, self.cell_labels[r][c])
 
     def _draw_plot(self, p: QPainter, cell: QRectF, state: str, label: str):
-        soil = QColor('#6a472f')
-        grass = QColor('#95c96b')
-        tree = QColor('#5e964b')
-        trunk = QColor('#6b4423')
+        """Draw a single plot cell with theme-aware colors."""
+        p_pal = self.theme.palette
+        
+        # Soil: dark brown/panel color
+        soil = QColor(p_pal['panel_dark'])
+        # Grass/foliage: accent soft green
+        grass = QColor(p_pal['accent_soft'])
+        # Tree: accent green
+        tree = QColor(p_pal['accent'])
+        # Trunk: slightly lighter than panel_dark
+        trunk = QColor(p_pal['panel_mid'])
+        # Cell border: muted color
+        cell_border = QColor(p_pal['muted'])
 
-        p.setPen(QPen(QColor('#3e2b1b'), 2))
+        p.setPen(QPen(cell_border, 2))
         p.setBrush(QBrush(soil))
         p.drawRoundedRect(cell, 10, 10)
 
         center_x = cell.center().x()
         if state in {'sprout', 'sapling', 'tree'}:
             if state == 'sprout':
-                p.setBrush(QBrush(QColor('#8bd35c')))
+                # Young sprout: bright accent
+                p.setBrush(QBrush(QColor(p_pal['accent_soft'])))
                 p.drawEllipse(QRectF(center_x - 8, cell.top() + 16, 16, 16))
                 p.drawLine(int(center_x), int(cell.top() + 18), int(center_x), int(cell.top() + 30))
             else:
-                p.setBrush(QBrush(QColor(trunk)))
+                # Sapling or tree: trunk + crown
+                p.setBrush(QBrush(trunk))
                 p.drawRoundedRect(QRectF(center_x - 6, cell.top() + 28, 12, 24), 4, 4)
                 crown = QRectF(center_x - 24, cell.top() + (10 if state == 'tree' else 16), 48, 34)
+                # Use grass for sapling, tree color for mature tree
                 p.setBrush(QBrush(tree if state == 'tree' else grass))
                 p.drawEllipse(crown)
                 p.drawEllipse(crown.adjusted(-12, 8, -10, 8))
                 p.drawEllipse(crown.adjusted(10, 8, 12, 8))
 
+        # Badge with label
         badge = QRectF(cell.left() + 10, cell.bottom() - 18, 54, 16)
-        p.setBrush(QColor('#f4ebd3'))
-        p.setPen(QPen(QColor('#58462f'), 1))
+        p.setBrush(QColor(p_pal['panel_light']))
+        p.setPen(QPen(QColor(p_pal['text']), 1))
         p.drawRoundedRect(badge, 8, 8)
         p.drawText(badge, Qt.AlignmentFlag.AlignCenter, label)
 
