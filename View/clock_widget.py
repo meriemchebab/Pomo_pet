@@ -191,7 +191,7 @@ class ClockWidget(QFrame):
         self.setObjectName("panelCard")
         self.setMinimumHeight(360)
         self.setMaximumHeight(820)
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         self._seconds = 25 * 60
         self._total = 25 * 60
@@ -297,8 +297,7 @@ class ClockWidget(QFrame):
                 border-radius: 20px;
                 min-height: 400px;
                 max-height: 780px;
-                min-width: 340px;
-                max-width: 760px;
+                min-width: 280px;
             }
             QLabel#phaseLabel {
                 color: #7d745f;
