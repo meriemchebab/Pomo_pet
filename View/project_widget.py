@@ -39,9 +39,9 @@ class TaskRow(QFrame):
         self.tomato_label = QLabel(f"🍓 {tomatoes}")
         self.tomato_label.setObjectName("tomatoCount")
 
-        self.delete_btn = QPushButton("×")
+        self.delete_btn = QPushButton(" X ")
         self.delete_btn.setObjectName("deleteTaskBtn")
-        self.delete_btn.setFixedSize(28, 28)
+        self.delete_btn.setFixedSize(36, 28)
         self.delete_btn.clicked.connect(lambda: self.deleted.emit(self.task_id))
 
         root.addWidget(self.checkbox)
@@ -73,6 +73,7 @@ class ProjectSection(QFrame):
     task_deleted = Signal(str)
     task_toggled = Signal(str, bool)
     task_focused = Signal(str)
+       
 
     def __init__(self, project_id: str, title: str, color: str, expanded: bool = True, parent=None):
         super().__init__(parent)
@@ -143,7 +144,8 @@ class ProjectSection(QFrame):
         self.root.addWidget(self.body)
 
         self.body.setVisible(expanded)
-
+        self.input.returnPressed.connect(self._submit_task)
+        self.add_btn.clicked.connect(self._submit_task)
     def toggle_expand(self):
         expanded = not self.body.isVisible()
         self.body.setVisible(expanded)
@@ -170,14 +172,20 @@ class ProjectSection(QFrame):
 
 class ProjectsWidget(QFrame):
     add_task_requested = Signal(str, str)
+    delete_task_requested = Signal(str)
+    toggle_task_requested = Signal(str, bool)
+    focus_task_requested = Signal(str)
+    new_project_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("panelCard")
 
-        root = QVBoxLayout(self)
-        root.setContentsMargins(16, 16, 16, 14)
-        root.setSpacing(12)
+        self._sections = {}
+
+        self.root = QVBoxLayout(self)
+        self.root.setContentsMargins(16, 16, 16, 14)
+        self.root.setSpacing(12)
 
         top = QHBoxLayout()
         top.setContentsMargins(0, 0, 0, 0)
@@ -187,38 +195,74 @@ class ProjectsWidget(QFrame):
 
         self.new_project_btn = QPushButton("+ New Project")
         self.new_project_btn.setObjectName("newProjectBtn")
+        self.new_project_btn.clicked.connect(self.new_project_requested)
 
         top.addWidget(title)
         top.addStretch()
         top.addWidget(self.new_project_btn)
 
-        root.addLayout(top)
+        self.root.addLayout(top)
 
-        self.chrono_section = ProjectSection("chrono_forest", "Chrono Forest", "#78b54d", True)
-        self.generic_section = ProjectSection("generic_work", "Generic Work", "#d8b24e", True)
-        self.ibm_section = ProjectSection("ibm_certificate", "IBM Certificate", "#6b88ea", False)
+        self.sections_container = QVBoxLayout()
+        self.sections_container.setSpacing(12)
+        self.root.addLayout(self.sections_container)
 
-        self.chrono_section.add_task("t1", "Build ClockWidget", 6, True)
-        self.chrono_section.add_task("t2", "Build ForestWidget", 3, False)
-        self.chrono_section.add_task("t3", "Wire signals", 0, False)
+        self.root.addStretch()
 
-        self.generic_section.add_task("t4", "Quick task without project", 1, False)
-
-        for section in (self.chrono_section, self.generic_section, self.ibm_section):
-            section.add_task_requested.connect(self._forward_add_task)
-            root.addWidget(section)
-
-        root.addStretch()
-
-        self.footer_note = QLabel("• No active task — click a task to focus")
+        self.footer_note = QLabel("• you can do this one task at a time")
         self.footer_note.setObjectName("footerNote")
-        root.addWidget(self.footer_note)
+        self.root.addWidget(self.footer_note)
 
         self._apply_style()
 
-    def _forward_add_task(self, project_id: str, text: str):
-        self.add_task_requested.emit(project_id, text)
+    def set_projects_section(self, projects: list[dict]):
+        self._clear_sections()
+        self._sections.clear()
 
+        for project in projects:
+            section = ProjectSection(
+                project["id"],
+                project["title"],
+                project["color"],
+                project.get("expanded", False),
+            )
+
+            for task in project.get("tasks", []):
+                section.add_task(
+                    task["id"],
+                    task["title"],
+                    task.get("tomatoes", 0),
+                    task.get("done", False),
+                )
+
+            section.add_task_requested.connect(self.add_task_requested)
+            section.task_deleted.connect(self.delete_task_requested)
+            section.task_toggled.connect(self.toggle_task_requested)
+            section.task_focused.connect(self.focus_task_requested)
+
+            self._sections[project["id"]] = section
+            self.sections_container.addWidget(section)
+
+    def _clear_sections(self):
+        while self.sections_container.count():
+            item = self.sections_container.takeAt(0)
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+
+    def add_task_to_project(self, project_id: str, task: dict):
+        project_id = project_id or "generic_work"
+        section = self._sections.get(project_id)
+        if section is None:
+            return
+
+        section.add_task(
+            task["id"],
+            task["title"],
+            task.get("tomatoes", 0),
+            task.get("done", False),
+        )
     def _apply_style(self):
         self.setStyleSheet("""
         QFrame#panelCard {
