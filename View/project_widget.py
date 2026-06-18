@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from .theme import ThemeBuilder
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -264,141 +264,144 @@ class ProjectsWidget(QFrame):
             task.get("done", False),
         )
     def _apply_style(self):
-        self.setStyleSheet("""
-        QFrame#panelCard {
+        p = ThemeBuilder().palette
+
+        self.setStyleSheet(f"""
+        QFrame#panelCard {{
             background: qlineargradient(
                 x1:0, y1:0, x2:1, y2:1,
-                stop:0 #143427,
-                stop:1 #102c21
+                stop:0 {p['panel_dark']},
+                stop:1 {p['bg']}
             );
-            border: 1px solid rgba(255,255,255,0.06);
+            border: 1px solid {p['line']};
             border-radius: 18px;
-        }
+        }}
 
-        QLabel#pageTitle {
-            color: #e5eedb;
+        QLabel#pageTitle {{
+            color: {p['panel']};
             font-size: 18px;
             font-weight: 700;
-        }
+        }}
 
-        QPushButton#newProjectBtn {
-            background: rgba(37, 71, 52, 0.9);
-            color: #dce9d0;
-            border: 1px solid rgba(255,255,255,0.05);
+        QPushButton#newProjectBtn {{
+            background: {p['panel_mid']};
+            color: {p['panel']};
+            border: 1px solid {p['line']};
             border-radius: 12px;
             padding: 10px 14px;
             font-size: 14px;
             font-weight: 700;
-        }
+        }}
 
-        QPushButton#newProjectBtn:hover {
-            background: rgba(48, 88, 64, 0.95);
-        }
+        QPushButton#newProjectBtn:hover {{
+            background: {p['accent_dark']};
+        }}
 
-        QLabel#projectDot {
+        QLabel#projectDot {{
             font-size: 14px;
-        }
+            color: {p['accent_soft']};
+        }}
 
-        QLabel#projectTitle {
-            color: #dbe8cf;
+        QLabel#projectTitle {{
+            color: {p['panel']};
             font-size: 16px;
             font-weight: 700;
-        }
+        }}
 
-        QLabel#projectCount {
-            color: rgba(188, 206, 170, 0.58);
+        QLabel#projectCount {{
+            color: {p['muted']};
             font-size: 13px;
             font-weight: 700;
             min-width: 14px;
-        }
+        }}
 
-        QToolButton#arrowBtn {
+        QToolButton#arrowBtn {{
             background: transparent;
             border: none;
-            color: rgba(188, 206, 170, 0.58);
+            color: {p['muted']};
             font-size: 14px;
             font-weight: 700;
-        }
+        }}
 
-        QFrame#taskRow {
-            background: rgba(255,255,255,0.025);
-            border: 1px solid rgba(255,255,255,0.045);
+        QFrame#taskRow {{
+            background: {p['panel_mid']};
+            border: 1px solid {p['line']};
             border-radius: 13px;
-        }
+        }}
 
-        QLabel#taskTitle {
-            color: #e7eedc;
+        QLabel#taskTitle {{
+            color: {p['panel']};
             font-size: 14px;
             font-weight: 600;
-        }
+        }}
 
-        QLabel#taskTitle[done="true"] {
-            color: rgba(198, 212, 182, 0.45);
+        QLabel#taskTitle[done="true"] {{
+            color: {p['muted']};
             text-decoration: line-through;
-        }
+        }}
 
-        QLabel#tomatoCount {
-            color: rgba(214, 183, 184, 0.72);
+        QLabel#tomatoCount {{
+            color: {p['accent_soft']};
             font-size: 13px;
             font-weight: 600;
-        }
+        }}
 
-        QPushButton#deleteTaskBtn {
-            background: rgba(255,255,255,0.03);
-            color: rgba(207, 220, 193, 0.5);
-            border: 1px solid rgba(255,255,255,0.04);
+        QPushButton#deleteTaskBtn {{
+            background: {p['panel_dark']};
+            color: {p['muted']};
+            border: 1px solid {p['line']};
             border-radius: 10px;
             font-size: 16px;
-        }
+        }}
 
-        QPushButton#deleteTaskBtn:hover {
-            background: rgba(255,255,255,0.06);
-            color: #e3ecd8;
-        }
+        QPushButton#deleteTaskBtn:hover {{
+            background: {p['danger']};
+            color: {p['white']};
+        }}
 
-        QLineEdit#taskInput {
-            background: #f4f2ec;
-            color: #26231f;
-            border: 1px solid rgba(0,0,0,0.08);
+        QLineEdit#taskInput {{
+            background: {p['panel_light']};
+            color: {p['text']};
+            border: 1px solid {p['line']};
             border-radius: 10px;
             padding: 10px 14px;
             font-size: 14px;
             font-style: italic;
-        }
+        }}
 
-        QPushButton#miniAddBtn {
+        QPushButton#miniAddBtn {{
             background: transparent;
-            color: rgba(188, 206, 170, 0.50);
+            color: {p['muted']};
             border: none;
             font-size: 18px;
             font-weight: 700;
-        }
+        }}
 
-        QPushButton#miniAddBtn:hover {
-            color: #dfead5;
-        }
+        QPushButton#miniAddBtn:hover {{
+            color: {p['accent']};
+        }}
 
-        QCheckBox {
+        QCheckBox {{
             spacing: 0px;
-        }
+        }}
 
-        QCheckBox::indicator {
+        QCheckBox::indicator {{
             width: 18px;
             height: 18px;
             border-radius: 9px;
-            border: 1px solid rgba(210,225,194,0.18);
+            border: 1px solid {p['line']};
             background: transparent;
-        }
+        }}
 
-        QCheckBox::indicator:checked {
-            background: #4a7333;
-            border: 1px solid rgba(156,198,99,0.28);
-        }
+        QCheckBox::indicator:checked {{
+            background: {p['accent']};
+            border: 1px solid {p['accent_dark']};
+        }}
 
-        QLabel#footerNote {
-            color: rgba(215, 189, 118, 0.75);
+        QLabel#footerNote {{
+            color: {p['accent_soft']};
             font-size: 13px;
             font-style: italic;
             padding-top: 6px;
-        }
+        }}
         """)
