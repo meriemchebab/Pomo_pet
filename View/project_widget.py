@@ -3,6 +3,8 @@ from .theme import ThemeBuilder
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
+    QDialog,
+    QDialogButtonBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -12,6 +14,36 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+
+class ProjectNameDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("New Project")
+        self.setModal(True)
+        self.setMinimumWidth(320)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        title = QLabel("Project name")
+        title.setObjectName("dialogTitle")
+        layout.addWidget(title)
+
+        self.input = QLineEdit()
+        self.input.setPlaceholderText("work")
+        layout.addWidget(self.input)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Ok
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def value(self) -> str:
+        return self.input.text().strip()
 
 
 class TaskRow(QFrame):
@@ -70,6 +102,7 @@ class TaskRow(QFrame):
 
 class ProjectSection(QFrame):
     add_task_requested = Signal(str, str)
+    delete_project_requested = Signal(str)
     task_deleted = Signal(str)
     task_toggled = Signal(str, bool)
     task_focused = Signal(str)
@@ -100,6 +133,12 @@ class ProjectSection(QFrame):
         left.addWidget(self.dot)
         left.addWidget(self.title_label)
 
+        self.delete_project_btn = QPushButton("Delete")
+        self.delete_project_btn.setObjectName("deleteProjectBtn")
+        self.delete_project_btn.clicked.connect(
+            lambda: self.delete_project_requested.emit(self.project_id)
+        )
+
         self.count_label = QLabel("0")
         self.count_label.setObjectName("projectCount")
 
@@ -111,6 +150,7 @@ class ProjectSection(QFrame):
         header.addLayout(left)
         header.addStretch()
         header.addWidget(self.count_label)
+        header.addWidget(self.delete_project_btn)
         header.addWidget(self.arrow)
 
         self.root.addLayout(header)
@@ -172,10 +212,11 @@ class ProjectSection(QFrame):
 
 class ProjectsWidget(QFrame):
     add_task_requested = Signal(str, str)
+    delete_project_requested = Signal(str)
     delete_task_requested = Signal(str)
     toggle_task_requested = Signal(str, bool)
     focus_task_requested = Signal(str)
-    new_project_requested = Signal()
+    new_project_requested = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -195,7 +236,7 @@ class ProjectsWidget(QFrame):
 
         self.new_project_btn = QPushButton("+ New Project")
         self.new_project_btn.setObjectName("newProjectBtn")
-        self.new_project_btn.clicked.connect(self.new_project_requested)
+        self.new_project_btn.clicked.connect(self._open_new_project_dialog)
 
         top.addWidget(title)
         top.addStretch()
@@ -214,6 +255,11 @@ class ProjectsWidget(QFrame):
         self.root.addWidget(self.footer_note)
 
         self._apply_style()
+
+    def _open_new_project_dialog(self):
+        dialog = ProjectNameDialog(self)
+        if dialog.exec():
+            self.new_project_requested.emit(dialog.value())
 
     def set_projects_section(self, projects: list[dict]):
         self._clear_sections()
@@ -236,6 +282,7 @@ class ProjectsWidget(QFrame):
                 )
 
             section.add_task_requested.connect(self.add_task_requested)
+            section.delete_project_requested.connect(self.delete_project_requested)
             section.task_deleted.connect(self.delete_task_requested)
             section.task_toggled.connect(self.toggle_task_requested)
             section.task_focused.connect(self.focus_task_requested)
@@ -295,6 +342,21 @@ class ProjectsWidget(QFrame):
 
         QPushButton#newProjectBtn:hover {{
             background: {p['accent_dark']};
+        }}
+
+        QPushButton#deleteProjectBtn {{
+            background: {p['panel_mid']};
+            color: {p['muted']};
+            border: 1px solid {p['line']};
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }}
+
+        QPushButton#deleteProjectBtn:hover {{
+            background: {p['danger']};
+            color: {p['white']};
         }}
 
         QLabel#projectDot {{

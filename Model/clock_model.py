@@ -88,6 +88,7 @@ class Clock(QObject):
     time_remaining = Signal(int)
     phase_changed = Signal(object)
     time_focused = Signal(int)
+    work_session_completed = Signal(int)
     def __init__(self, settings: Optional[ClockSettings] = None):
         super().__init__()
         self.settings = settings or ClockSettings()
@@ -152,6 +153,7 @@ class Clock(QObject):
         if self.phase == Phase.WORK:
             self.completed_pomos += 1
             self.time_focused.emit(self.time_passed) #emit the focused time 
+            self.work_session_completed.emit(self.time_passed)
             if self.completed_pomos % self.settings.pomo_until_break == 0:
                 self.phase = Phase.LONG_BREAK
                 self.time_left = int(self.settings.long_break_time)

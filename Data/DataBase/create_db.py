@@ -1,0 +1,69 @@
+from Data.DataBase.db_connection import Connection
+
+db = Connection("pomo_pet.db")
+curr = db.conn.cursor()
+# create tables of session , tasks , projects and task_progress
+# note for me : what if the project and the task IDs are hash of there names and not auto incrrement 
+curr.execute(
+    """CREATE TABLE IF NOT EXISTS Projects(
+    ID_P INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    tag TEXT,
+    progress REAL,
+    state TEXT)"""
+)
+db.conn.commit()
+curr.execute(
+    """
+DROP TABLE IF EXISTS Tasks"""
+)
+db.conn.commit()
+curr.execute(
+    """CREATE TABLE IF NOT EXISTS Tasks (
+    ID_T INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    status TEXT ,
+    discription TEXT ,
+    tag TEXT,
+    ID_P INTEGER ,
+    FOREIGN KEY (ID_P) REFERENCES Projects(ID_P) ON DELETE CASCADE
+    )
+"""
+)
+db.conn.commit()
+db.close_connection()
+
+curr.execute(
+    """CREATE TABLE IF NOT EXISTS Session (
+    ID_S INTEGER PRIMARY KEY AUTOINCREMENT ,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    pomo_num INTEGER DEFAULT 0,
+    focus_time INTEGER DEFAULT 0,
+    day_open TEXT
+    )
+    """
+)
+
+db.conn.commit()
+
+# curr.execute(
+#     """ CREATE TABLE IF NOT EXISTS Tasks (
+#     ID_T INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+#     status TEXT ,
+#     discription TEXT ,
+#     tag TEXT)
+# """
+# )
+db.conn.commit()
+curr.execute(
+    """ CREATE TABLE IF NOT EXISTS task_progress(
+    ID_prog INTEGER PRIMARY KEY AUTOINCREMENT,
+    ID_T INTEGER,
+    ID_S INTEGER,
+pomo_count INTEGER DEFAULT 0,
+FOREIGN KEY (ID_T) REFERENCES Tasks(ID_T) ON DELETE CASCADE,
+FOREIGN KEY (ID_S) REFERENCES Session(ID_S) ON DELETE CASCADE
+)
+"""
+)
+db.conn.commit()
+db.close_connection()

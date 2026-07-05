@@ -15,33 +15,40 @@ curr.execute(
     )
     """
 )
-# s.execute("PRAGMA foreign_keys = ON;")
-    # s.execute(""" CREATE TABLE IF NOT EXISTS book_notes (
-    # book_id REAL PRIMARY KEY,
-    # note_text TEXT,
-    # created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    # updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    # FOREIGN KEY (book_id) REFERENCES BOOKS(book_id) ON DELETE CASCADE)""")
-    # conn.commit()
-    # s.close()
 
 db.conn.commit()
 
 curr.execute(
+    """ CREATE TABLE IF NOT EXISTS Projects(
+    ID_P INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    tag TEXT,
+    progress REAL,
+    state TEXT
+    )
+"""
+)
+db.conn.commit()
+curr.execute(
     """ CREATE TABLE IF NOT EXISTS Tasks (
     ID_T INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    ID_P INTEGER,
     status TEXT ,
     discription TEXT ,
-    tag TEXT)
+    tag TEXT,
+    FOREIGN KEY (ID_P) REFERENCES Projects(ID_P) ON DELETE CASCADE
+    )
 """
 )
 db.conn.commit()
 curr.execute(
     """ CREATE TABLE IF NOT EXISTS task_progress(
     ID_prog INTEGER PRIMARY KEY AUTOINCREMENT,
-FOREIGN KEY (ID_T) REFERENCES Tasks(ID_T) ON DELETE CASCADE,
-FOREIGN KEY (ID_S) REFERENCES Session(ID_S) ON DELETE CASCADE,
-pomo_count INTEGER DEFAULT 0
+    ID_T INTEGER,
+    ID_S INTEGER,
+    pomo_count INTEGER DEFAULT 0,
+    FOREIGN KEY (ID_T) REFERENCES Tasks(ID_T) ON DELETE CASCADE,
+    FOREIGN KEY (ID_S) REFERENCES Session(ID_S) ON DELETE CASCADE
 )
 """
 )

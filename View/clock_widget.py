@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
     QPushButton,
     QSizePolicy,
     QSpinBox,
@@ -189,8 +191,155 @@ class QuickSetupDialog(QDialog):
         }
 
 
+class TaskCard(QFrame):
+    clicked = Signal(dict)
+
+    def __init__(self, task_data: dict, parent=None):
+        super().__init__(parent)
+        self.task_data = task_data
+        self.setObjectName("taskCard")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(4)
+
+        self.title_label = QLabel(task_data.get("title", "Untitled task"))
+        self.title_label.setObjectName("taskTitle")
+
+        self.project_label = QLabel(f"Project: {task_data.get('project', 'Unknown')}")
+        self.project_label.setObjectName("taskProject")
+
+        status = "Done" if task_data.get("done", False) else "Pending"
+        self.status_label = QLabel(status)
+        self.status_label.setObjectName("taskStatus")
+
+        layout.addWidget(self.title_label)
+        layout.addWidget(self.project_label)
+        layout.addWidget(self.status_label)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self.task_data)
+        super().mousePressEvent(event)
+
+
+class TaskChooserDialog(QDialog):
+    task_selected = Signal(str)
+
+    def __init__(self, tasks: list[dict], parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Choose Task")
+        self.setModal(True)
+        self.setMinimumSize(420, 420)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
+        title = QLabel("Choose a task")
+        title.setObjectName("chooserTitle")
+        layout.addWidget(title)
+
+        subtitle = QLabel("Pick a task from any project. The timer starts as soon as you click one.")
+        subtitle.setObjectName("chooserSubtitle")
+        subtitle.setWordWrap(True)
+        layout.addWidget(subtitle)
+
+        self.list_widget = QListWidget()
+        self.list_widget.setObjectName("taskList")
+        self.list_widget.setSpacing(8)
+        layout.addWidget(self.list_widget)
+
+        self.select_btn = QPushButton("Start with selected task")
+        self.select_btn.setObjectName("accentButton")
+        self.select_btn.setEnabled(False)
+        
+
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.setObjectName("secondaryButton")
+        self.cancel_btn.setFixedSize(76,60)
+        btns = QHBoxLayout()
+        btns.addWidget(self.cancel_btn)
+        btns.addWidget(self.select_btn)
+        layout.addLayout(btns)
+
+        self.cancel_btn.clicked.connect(self.reject)
+        self.select_btn.clicked.connect(self.accept_selection)
+
+        self.selected_task = None
+        self.populate_tasks(tasks)
+
+        self.setStyleSheet(
+            f"""
+            QListWidget#taskList {{
+                border: none;
+                background: transparent;
+            }}
+            QFrame#taskCard {{
+                background: {ThemeBuilder().palette['panel_light']};
+                border: 1px solid {ThemeBuilder().palette['line']};
+                border-radius: 14px;
+            }}
+            QFrame#taskCard:hover {{
+                background: {ThemeBuilder().palette['panel']};
+                border: 1px solid {ThemeBuilder().palette['accent']};
+            }}
+            QFrame#taskCard[selected="true"] {{
+                background: {ThemeBuilder().palette['panel']};
+                border: 2px solid {ThemeBuilder().palette['accent_dark']};
+            }}
+            QLabel#taskTitle {{
+                color: {ThemeBuilder().palette['text']};
+                font-size: 14px;
+                font-weight: 800;
+            }}
+            QLabel#taskProject {{
+                color: {ThemeBuilder().palette['muted']};
+                font-size: 12px;
+                font-weight: 600;
+            }}
+            QLabel#taskStatus {{
+                color: {ThemeBuilder().palette['accent_dark']};
+                font-size: 11px;
+                font-weight: 700;
+            }}
+            """
+        )
+
+    def populate_tasks(self, tasks: list[dict]):
+        self.list_widget.clear()
+        for task in tasks:
+            item = QListWidgetItem(self.list_widget)
+            card = TaskCard(task)
+            card.clicked.connect(self.on_card_clicked)
+            item.setSizeHint(card.sizeHint())
+            self.list_widget.addItem(item)
+            self.list_widget.setItemWidget(item, card)
+
+    def on_card_clicked(self, task_data: dict):
+        self.selected_task = task_data
+        self.select_btn.setEnabled(True)
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            widget = self.list_widget.itemWidget(item)
+            if widget is not None:
+                widget.setProperty("selected", widget== task_data)
+                widget.style().unpolish(widget)
+                widget.style().polish(widget)
+                widget.update()
+
+    def accept_selection(self):
+        if self.selected_task is not None:
+            self.task_selected.emit(self.selected_task["id"])
+            self.accept()
+        self.accept()
+
+
 class ClockWidget(QFrame):
     settings_requested = Signal(dict)
+    choose_task_requested = Signal()
+    task_selected = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -256,8 +405,10 @@ class ClockWidget(QFrame):
 
         self.start_btn = QPushButton("Start")
         self.start_btn.setObjectName("accentButton")
-
+        self.choose_task_btn = QPushButton("Choose Task")
+        self.choose_task_btn.setObjectName("accentButton")
         controls.addWidget(self.start_btn)
+        controls.addWidget(self.choose_task_btn)
 
 
         presets = QHBoxLayout()
@@ -265,25 +416,26 @@ class ClockWidget(QFrame):
         presets.setContentsMargins(0, 0, 0, 10)
         self.pause_btn = QPushButton("Pause")
         self.pause_btn.setIcon(QIcon("assets/pause.png"))
-        self.pause_btn.setObjectName("softButton")
+        self.pause_btn.setObjectName("secondaryButton")
         self.pause_btn.setFixedSize(76, 40)
         self.skip_btn = HoverButton("Skip", "assets/skip.png")
         self.reset_btn = HoverButton("Reset", "assets/reset.png")
 
         for btn in [self.skip_btn, self.reset_btn]:
             btn.set_icon()
-            btn.setObjectName("softButton")
+            btn.setObjectName("secondaryButton")
             btn.setFixedSize(76, 40)
-        
-
+        self.quick_setup_btn = QPushButton("Setup")
+        self.quick_setup_btn.setObjectName("secondaryButton")
+        self.quick_setup_btn.setIcon(QIcon("assets/clock.png"))
+        self.quick_setup_btn.setIconSize(QSize(20, 20))
+        self.quick_setup_btn.setFixedSize(120, 40)
         presets.addWidget(self.pause_btn)
         presets.addWidget(self.skip_btn)
         presets.addWidget(self.reset_btn)
+        presets.addWidget(self.quick_setup_btn)
         presets.addStretch()
-        
-        self.quick_setup_btn = HoverButton("quik setup","assets/clock.png")
-        self.quick_setup_btn.setObjectName("softButton")
-        self.quick_setup_btn.set_icon()
+
         # root.addWidget(self.phase_label)
         root.addLayout(presets ,Qt.AlignmentFlag.AlignLeft)
         root.addWidget(self.stats_card)
@@ -291,11 +443,11 @@ class ClockWidget(QFrame):
         root.addWidget(self.face, alignment=Qt.AlignmentFlag.AlignCenter)
         root.addWidget(self.meta_label)
         root.addLayout(controls)
-        root.addWidget(self.quick_setup_btn)
         
         
 
         self.quick_setup_btn.clicked.connect(self.open_quick_setup)
+        self.choose_task_btn.clicked.connect(self.choose_task_requested.emit)
 
         self._apply_style()
         self.refresh_focus_stats()
@@ -386,10 +538,8 @@ class ClockWidget(QFrame):
             QPushButton#secondaryButton {{
                 background: {p['panel']};
             }}
-            /* Soft/ghost button */
-            QPushButton#softButton {{
+            QPushButton#secondaryButton:hover {{
                 background: {p['panel_light']};
-                color: {p['text']};
             }}
             /* Dialog background */
             QDialog {{
@@ -454,6 +604,18 @@ class ClockWidget(QFrame):
             values = dialog.values()
             self.apply_settings(values)
             self.settings_requested.emit(values)
+
+    def open_task_chooser(self, projects: list[dict]) -> None:
+        flat_tasks = []
+        for project in projects:
+            for task in project.get("tasks", []):
+                task_copy = dict(task)
+                task_copy["project"] = project.get("title", "Unknown")
+                flat_tasks.append(task_copy)
+
+        dialog = TaskChooserDialog(flat_tasks, parent=self)
+        dialog.task_selected.connect(self.task_selected.emit)
+        dialog.exec()
 
     def apply_settings(self, settings: dict):
         """function to set the new prefered settings and update the UI , use after dialog box get closed"""

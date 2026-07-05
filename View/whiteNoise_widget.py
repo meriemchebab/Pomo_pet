@@ -213,14 +213,14 @@ class WhiteNoiseWidget(QFrame):
         root.addWidget(SoundRow("🌧", "Rain", 58, True))
         root.addWidget(SoundRow("🌊", "Ocean", 34, False))
         root.addWidget(SoundRow("🔥", "Fireplace", 39, False))
-        root.addWidget(SoundRow("🍃", "Forest\nWind", 20, True))
+        root.addWidget(SoundRow("🍃", "Forest", 20, True))
         root.addWidget(SoundRow("☕", "Café", 31, False))
 
         root.addSpacing(8)
         root.addWidget(SectionTitle("NOTIFICATION SOUNDS"))
-        root.addWidget(NotificationRow("🔔", "On\nstart"))
-        root.addWidget(NotificationRow("🎵", "On\nbreak"))
-        root.addWidget(NotificationRow("✅", "On\nfinish"))
+        root.addWidget(NotificationRow("🔔", "start"))
+        root.addWidget(NotificationRow("🎵", "break"))
+        root.addWidget(NotificationRow("✅", "finish"))
 
         root.addSpacing(8)
         root.addWidget(SectionTitle("MASTER VOLUME"))

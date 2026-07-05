@@ -11,6 +11,6 @@ class Connection():
         self.path = os.path.normpath(db_path)
         self.conn = sqlite3.connect(self.path)
         self.conn.execute("PRAGMA foreign_keys = ON")
-        self.row_factory = sqlite3.Row #will return a dict like : row["id"]
+        self.conn.row_factory = sqlite3.Row # will return a dict like row["id"]
     def close_connection(self):
         self.conn.close()

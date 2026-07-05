@@ -1,5 +1,5 @@
 import sqlite3
-from db_connection import Connection
+from DataBase.db_connection import Connection
 from Model.session_model import Session
 from datetime import datetime
 

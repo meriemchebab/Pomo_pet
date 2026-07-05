@@ -114,9 +114,9 @@ class Sidebar(QFrame):
         self._nav_layout.setContentsMargins(6, 8, 6, 8)
         self._nav_layout.setSpacing(3)
         icons = {
-        "forest": "assets/forest.png",
+        "forest": "assets/tree.png",
         "pet": "assets/pet.png",
-        "projects": "assets/projects.png",
+        "projects": "assets/task-list.png",
         "sounds": "assets/sound.png",
         "settings": "assets/settings.png",
                 }

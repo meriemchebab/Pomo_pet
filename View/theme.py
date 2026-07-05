@@ -62,7 +62,7 @@ PALETTE: Dict[str, str] = PALETTES["Forest Dark"]
 # call themebuilder in the main window UI so you can change the theme 
 class ThemeBuilder():
     def __init__(self,parent = None):
-        self.current_theme = "Forest Dark"
+        self.current_theme = "Forest Light"
     @property
     # helper to get the current palette theme
     def palette(self) -> Dict[str, str]:
@@ -104,7 +104,7 @@ class ThemeBuilder():
         background: {p['panel_light']};
         border: 1px solid {p['line']};
         border-radius: 8px;
-        padding: 8px 12px;
+        padding: 8px 8px;
     }}
     QPushButton:hover {{
         background: {p['panel_light']}cc;
