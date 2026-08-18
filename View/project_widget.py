@@ -56,8 +56,10 @@ class TaskRow(QFrame):
         self.task_id = task_id
         self.setObjectName("taskRow")
 
+        # Slightly taller vertical padding + tighter, more deliberate spacing
+        # between elements so the row doesn't feel like one crowded strip.
         root = QHBoxLayout(self)
-        root.setContentsMargins(12, 10, 12, 10)
+        root.setContentsMargins(14, 10, 10, 10)
         root.setSpacing(10)
 
         self.checkbox = QCheckBox()
@@ -67,13 +69,22 @@ class TaskRow(QFrame):
         self.title_label = QLabel(title)
         self.title_label.setObjectName("taskTitle")
         self.title_label.setProperty("done", done)
+        self.title_label.setWordWrap(True)
 
-        self.tomato_label = QLabel(f"{tomatoes}")
+        # Tomato count is now a small pill/badge instead of plain text,
+        # so it reads as a metric rather than blending into the row.
+        self.tomato_label = QLabel(f"🍅 {tomatoes}")
         self.tomato_label.setObjectName("tomatoCount")
+        self.tomato_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.delete_btn = QPushButton(" X ")
+        # Delete button: was 36x28 with a bulky " X " label that visually
+        # outweighed everything else in a ~48px-tall row. Now a small,
+        # circular, low-emphasis icon button that only asserts itself
+        # (danger red + white glyph) on hover.
+        self.delete_btn = QPushButton("×")
         self.delete_btn.setObjectName("deleteTaskBtn")
-        self.delete_btn.setFixedSize(36, 28)
+        self.delete_btn.setFixedSize(24, 24)
+        self.delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.delete_btn.clicked.connect(lambda: self.deleted.emit(self.task_id))
 
         root.addWidget(self.checkbox)
@@ -106,7 +117,6 @@ class ProjectSection(QFrame):
     task_deleted = Signal(str)
     task_toggled = Signal(str, bool)
     task_focused = Signal(str)
-       
 
     def __init__(self, project_id: str, title: str, color: str, expanded: bool = True, parent=None):
         super().__init__(parent)
@@ -119,6 +129,7 @@ class ProjectSection(QFrame):
 
         header = QHBoxLayout()
         header.setContentsMargins(2, 0, 2, 0)
+        header.setSpacing(10)
 
         left = QHBoxLayout()
         left.setSpacing(8)
@@ -135,6 +146,7 @@ class ProjectSection(QFrame):
 
         self.delete_project_btn = QPushButton("Delete")
         self.delete_project_btn.setObjectName("deleteProjectBtn")
+        self.delete_project_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.delete_project_btn.clicked.connect(
             lambda: self.delete_project_requested.emit(self.project_id)
         )
@@ -145,6 +157,7 @@ class ProjectSection(QFrame):
         self.arrow = QToolButton()
         self.arrow.setObjectName("arrowBtn")
         self.arrow.setText("▾" if expanded else "▸")
+        self.arrow.setCursor(Qt.CursorShape.PointingHandCursor)
         self.arrow.clicked.connect(self.toggle_expand)
 
         header.addLayout(left)
@@ -157,8 +170,8 @@ class ProjectSection(QFrame):
 
         self.body = QWidget()
         self.body_layout = QVBoxLayout(self.body)
-        self.body_layout.setContentsMargins(22, 2, 0, 0)
-        self.body_layout.setSpacing(8)
+        self.body_layout.setContentsMargins(22, 4, 0, 0)
+        self.body_layout.setSpacing(10)
 
         self.task_container = QVBoxLayout()
         self.task_container.setSpacing(8)
@@ -174,7 +187,8 @@ class ProjectSection(QFrame):
 
         self.add_btn = QPushButton("+")
         self.add_btn.setObjectName("miniAddBtn")
-        self.add_btn.setFixedSize(24, 24)
+        self.add_btn.setFixedSize(26, 26)
+        self.add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.add_btn.clicked.connect(self._submit_task)
 
         add_row.addWidget(self.input, 1)
@@ -184,8 +198,7 @@ class ProjectSection(QFrame):
         self.root.addWidget(self.body)
 
         self.body.setVisible(expanded)
-        self.input.returnPressed.connect(self._submit_task)
-        self.add_btn.clicked.connect(self._submit_task)
+
     def toggle_expand(self):
         expanded = not self.body.isVisible()
         self.body.setVisible(expanded)
@@ -236,6 +249,7 @@ class ProjectsWidget(QFrame):
 
         self.new_project_btn = QPushButton("+ New Project")
         self.new_project_btn.setObjectName("newProjectBtn")
+        self.new_project_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.new_project_btn.clicked.connect(self._open_new_project_dialog)
 
         top.addWidget(title)
@@ -310,6 +324,7 @@ class ProjectsWidget(QFrame):
             task.get("tomatoes", 0),
             task.get("done", False),
         )
+
     def _apply_style(self):
         p = ThemeBuilder().palette
 
@@ -344,24 +359,28 @@ class ProjectsWidget(QFrame):
             background: {p['accent_dark']};
         }}
 
+        /* Was: background panel_mid + color muted -> muted brown-gray text
+           on a mid-green fill had barely any contrast. Now a "ghost" button:
+           transparent fill, light readable border/text, fills solid red
+           with white text on hover so the destructive intent is obvious. */
         QPushButton#deleteProjectBtn {{
-            background: {p['panel_mid']};
-            color: {p['muted']};
+            background: transparent;
+            color: {p['panel']};
             border: 1px solid {p['line']};
             border-radius: 10px;
-            padding: 7px 12px;
-            font-size: 13px;
+            padding: 6px 12px;
+            font-size: 12px;
             font-weight: 700;
         }}
 
         QPushButton#deleteProjectBtn:hover {{
             background: {p['danger']};
+            border-color: {p['danger']};
             color: {p['white']};
         }}
 
         QLabel#projectDot {{
             font-size: 14px;
-            color: {p['accent_soft']};
         }}
 
         QLabel#projectTitle {{
@@ -370,25 +389,37 @@ class ProjectsWidget(QFrame):
             font-weight: 700;
         }}
 
+        /* Was `muted` on the dark panelCard background -> nearly invisible.
+           Swapped to accent_soft, which is the light green already used
+           for the footer note and reads clearly here too. */
         QLabel#projectCount {{
-            color: {p['muted']};
+            color: {p['accent_soft']};
             font-size: 13px;
             font-weight: 700;
-            min-width: 14px;
+            min-width: 16px;
         }}
 
         QToolButton#arrowBtn {{
             background: transparent;
             border: none;
-            color: {p['muted']};
+            color: {p['accent_soft']};
             font-size: 14px;
             font-weight: 700;
+            padding: 4px;
+        }}
+
+        QToolButton#arrowBtn:hover {{
+            color: {p['panel']};
         }}
 
         QFrame#taskRow {{
             background: {p['panel_mid']};
             border: 1px solid {p['line']};
-            border-radius: 13px;
+            border-radius: 12px;
+        }}
+
+        QFrame#taskRow:hover {{
+            border: 1px solid {p['accent_soft']};
         }}
 
         QLabel#taskTitle {{
@@ -398,27 +429,38 @@ class ProjectsWidget(QFrame):
         }}
 
         QLabel#taskTitle[done="true"] {{
-            color: {p['muted']};
+            color: {p['text_dim']};
             text-decoration: line-through;
         }}
 
+        /* Tomato count is now a small badge (accent fill + white text)
+           instead of low-contrast text sitting directly on the row. */
         QLabel#tomatoCount {{
-            color: {p['accent_soft']};
-            font-size: 13px;
-            font-weight: 600;
+            background: {p['accent_dark']};
+            color: {p['white']};
+            border-radius: 9px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 700;
         }}
 
+        /* Was a 36x28 filled box with a bulky " X " label — heavier than
+           the checkbox next to it. Now a small transparent circular icon
+           button, quiet at rest, that turns into a clear red "delete"
+           affordance only on hover. */
         QPushButton#deleteTaskBtn {{
-            background: {p['panel_dark']};
-            color: {p['muted']};
-            border: 1px solid {p['line']};
-            border-radius: 10px;
-            font-size: 16px;
+            background: transparent;
+            color: {p['panel']};
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 0px;
         }}
 
         QPushButton#deleteTaskBtn:hover {{
-            background: {p['accent_soft']};
-            color: {p['text']};
+            background: {p['danger']};
+            color: {p['white']};
         }}
 
         QLineEdit#taskInput {{
@@ -426,21 +468,24 @@ class ProjectsWidget(QFrame):
             color: {p['text']};
             border: 1px solid {p['line']};
             border-radius: 10px;
-            padding: 10px 14px;
+            padding: 8px 12px;
             font-size: 14px;
-            font-style: italic;
         }}
 
+        /* Was `muted` on transparent (= dark panelCard bg showing through)
+           -> barely legible "+" button. */
         QPushButton#miniAddBtn {{
             background: transparent;
-            color: {p['muted']};
+            color: {p['accent_soft']};
             border: none;
+            border-radius: 13px;
             font-size: 18px;
             font-weight: 700;
         }}
 
         QPushButton#miniAddBtn:hover {{
-            color: {p['accent']};
+            background: {p['accent']};
+            color: {p['white']};
         }}
 
         QCheckBox {{
@@ -452,7 +497,7 @@ class ProjectsWidget(QFrame):
             height: 18px;
             border-radius: 9px;
             border: 1px solid {p['line']};
-            background: transparent;
+            background: {p['panel_light']};
         }}
 
         QCheckBox::indicator:checked {{
