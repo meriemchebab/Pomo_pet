@@ -1,3 +1,39 @@
 # this is a pomodoro desktop application with a pet 
 - help make productivity more fun  with added *white noise features* 
 - help make a habit tracking by tracking days of *productive work done on a task*
+Project Structure
+Pomo_pet/
+├── Main/                    # Application entry point
+│   ├── main.py             # Main application launcher
+│   ├── pet.py              # Desktop pet implementation
+│   └── test_*.py           # Test files
+├── View/                    # UI Components (PySide6 Widgets)
+│   ├── main_widget.py      # Main window container
+│   ├── clock_widget.py     # Pomodoro timer display
+│   ├── pet_widget.py       # Pet status and happiness
+│   ├── forest_widget.py    # Forest visualization
+│   ├── tasks_widget.py     # Task management interface
+│   ├── project_widget.py   # Project organization
+│   ├── settings_widget.py  # App settings and preferences
+│   ├── whiteNoise_widget.py# Ambient sounds player
+│   └── theme.py            # Theming system & color palettes
+├── Controller/             # Business Logic & Event Handling
+│   ├── clock_controller.py # Timer logic and state
+│   ├── main_controller.py  # Main app orchestration
+│   ├── project_controller.py# Project management logic
+│   └── settings_controller.py# Settings handling
+├── Model/                  # Data Models
+│   ├── clock_model.py      # Timer state model
+│   ├── session_model.py    # Pomodoro session data
+│   ├── tasks_manager_model.py# Task management logic
+│   └── app_settings_model.py# Application settings
+├── DataBase/              # Database Layer
+│   ├── db_connection.py   # Database connection manager
+│   ├── create_db.py       # Database initialization
+│   ├── settings.json      # Database configuration
+│   └── DAO/              # Data Access Objects
+│       ├── projects_dao.py
+│       ├── session_dao.py
+│       └── tasks_dao.py
+├── assets/               # Images and media files
+└── README.md
