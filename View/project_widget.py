@@ -68,7 +68,7 @@ class TaskRow(QFrame):
         self.title_label.setObjectName("taskTitle")
         self.title_label.setProperty("done", done)
 
-        self.tomato_label = QLabel(f"🍓 {tomatoes}")
+        self.tomato_label = QLabel(f"{tomatoes}")
         self.tomato_label.setObjectName("tomatoCount")
 
         self.delete_btn = QPushButton(" X ")
@@ -417,8 +417,8 @@ class ProjectsWidget(QFrame):
         }}
 
         QPushButton#deleteTaskBtn:hover {{
-            background: {p['danger']};
-            color: {p['white']};
+            background: {p['accent_soft']};
+            color: {p['text']};
         }}
 
         QLineEdit#taskInput {{

@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QObject, Signal, Slot
-
+from DataBase.db_connection import Connection
 from Model.tasks_manager_model import ProjectManager
 
 
 class ProjectController(QObject):
     task_list_ready = Signal(list)
 
-    def __init__(self, view=None, parent=None):
+    def __init__(self,connection :Connection ,view=None, parent=None):
         super().__init__(parent)
-        self.model = ProjectManager()
+        self.model = ProjectManager(connection=connection)
         self.view = None
         if view is not None:
             self.set_view(view)

@@ -20,21 +20,21 @@ from View.whiteNoise_widget import WhiteNoiseWidget
 
 def main() -> None:
 	app = QApplication(sys.argv)
-	db_connection = Connection
+	
 	# apply global theme
 	builder = ThemeBuilder()
 	app.setStyleSheet(builder.stylesheet())
-	# project_controller = ProjectController(db_connection)
+	db_connection = Connection("pomo_pet.db")
+	project_controller = ProjectController(db_connection)
 	clock_controller = ClockController()
 	c = clock_controller.view
-
 	Pet = PetWidget()
 	Pet.complete_day(1)
 	Pet.complete_day(2)
 	S = SettingsWidget()
 	T = ProjectsWidget()
-	# project_controller.set_view(T)
-	# main_controller = MainController(clock_controller, project_controller)
+	project_controller.set_view(T)
+	main_controller = MainController(clock_controller, project_controller)
 	w = WhiteNoiseWidget()
 	main_view = MainWindow(c,Pet,T,w,S)
 	main_view.show()
