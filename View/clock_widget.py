@@ -181,6 +181,54 @@ class QuickSetupDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
+        p = ThemeBuilder().palette
+        self.setStyleSheet(
+            f"""
+            QDialog {{
+                background: {p['panel_dark']};
+                border: 1px solid {p['line']};
+                border-radius: 16px;
+            }}
+            QLabel {{
+                color: {p['panel']};
+                font-size: 13px;
+                font-weight: 600;
+            }}
+            QLabel#dialogIntro {{
+                color: {p['panel']};
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }}
+            QCheckBox {{
+                color: {p['panel']};
+                font-weight: 600;
+            }}
+            QDoubleSpinBox, QSpinBox {{
+                background: {p['panel_light']};
+                color: {p['text']};
+                border: 1px solid {p['line']};
+                border-radius: 8px;
+                padding: 6px 10px;
+                font-size: 13px;
+                font-weight: 700;
+            }}
+            QPushButton {{
+                background: {p['panel_mid']};
+                color: {p['panel']};
+                border: 1px solid {p['line']};
+                border-radius: 8px;
+                padding: 6px 14px;
+                font-weight: 700;
+            }}
+            QPushButton:hover {{
+                background: {p['accent']};
+                color: {p['white']};
+            }}
+            """
+        )
+
+
     def values(self) -> dict:
         return {
             "duration": int(self.duration_spin.value() * 60),
@@ -270,42 +318,59 @@ class TaskChooserDialog(QDialog):
         self.selected_task = None
         self.populate_tasks(tasks)
 
+        p = ThemeBuilder().palette
         self.setStyleSheet(
             f"""
+            QDialog {{
+                background: {p['panel_dark']};
+                border: 1px solid {p['line']};
+                border-radius: 16px;
+            }}
+            QLabel#chooserTitle {{
+                color: {p['panel']};
+                font-size: 17px;
+                font-weight: 800;
+            }}
+            QLabel#chooserSubtitle {{
+                color: {p['text_dim']};
+                font-size: 12px;
+                font-weight: 600;
+            }}
             QListWidget#taskList {{
                 border: none;
                 background: transparent;
             }}
             QFrame#taskCard {{
-                background: {ThemeBuilder().palette['panel_light']};
-                border: 1px solid {ThemeBuilder().palette['line']};
+                background: {p['panel_mid']};
+                border: 1px solid {p['line']};
                 border-radius: 14px;
             }}
             QFrame#taskCard:hover {{
-                background: {ThemeBuilder().palette['panel']};
-                border: 1px solid {ThemeBuilder().palette['accent']};
+                background: {p['panel_light']};
+                border: 1px solid {p['accent']};
             }}
             QFrame#taskCard[selected="true"] {{
-                background: {ThemeBuilder().palette['panel']};
-                border: 2px solid {ThemeBuilder().palette['accent_dark']};
+                background: {p['panel_light']};
+                border: 2px solid {p['accent_dark']};
             }}
             QLabel#taskTitle {{
-                color: {ThemeBuilder().palette['text']};
+                color: {p['text']};
                 font-size: 14px;
                 font-weight: 800;
             }}
             QLabel#taskProject {{
-                color: {ThemeBuilder().palette['muted']};
+                color: {p['text_dim']};
                 font-size: 12px;
                 font-weight: 600;
             }}
             QLabel#taskStatus {{
-                color: {ThemeBuilder().palette['accent_dark']};
+                color: {p['accent_soft']};
                 font-size: 11px;
                 font-weight: 700;
             }}
             """
         )
+
 
     def populate_tasks(self, tasks: list[dict]):
         self.list_widget.clear()
@@ -436,13 +501,19 @@ class ClockWidget(QFrame):
         presets.addWidget(self.quick_setup_btn)
         presets.addStretch()
 
+        self.active_task_label = QLabel("🎯 Task: None selected")
+        self.active_task_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.active_task_label.setObjectName("activeTaskLabel")
+
         # root.addWidget(self.phase_label)
-        root.addLayout(presets ,Qt.AlignmentFlag.AlignLeft)
+        root.addLayout(presets, Qt.AlignmentFlag.AlignLeft)
         root.addWidget(self.stats_card)
-        root.addWidget(self.cycle_label,alignment=Qt.AlignmentFlag.AlignLeft)
+        root.addWidget(self.active_task_label)
+        root.addWidget(self.cycle_label, alignment=Qt.AlignmentFlag.AlignLeft)
         root.addWidget(self.face, alignment=Qt.AlignmentFlag.AlignCenter)
         root.addWidget(self.meta_label)
         root.addLayout(controls)
+
         
         
 
@@ -467,12 +538,22 @@ class ClockWidget(QFrame):
                 max-height: 780px;
                 min-width: 280px;
             }}
+            /* Active Task label */
+            QLabel#activeTaskLabel {{
+                color: {p['accent_dark']};
+                font-size: 13px;
+                font-weight: 700;
+                padding: 4px 8px;
+                background: {p['panel_light']};
+                border-radius: 8px;
+            }}
             /* Cycle indicator label */
             QLabel#cycleLabel {{
                 color: {p['text']};
                 font-size: 12px;
                 font-weight: 800;
             }}
+
             /* Meta information label */
             QLabel#metaLabel {{
                 color: {p['muted']};
@@ -541,9 +622,14 @@ class ClockWidget(QFrame):
             QPushButton#secondaryButton:hover {{
                 background: {p['panel_light']};
             }}
-            /* Dialog background */
+            /* Dialog background & text styling */
             QDialog {{
                 background: {p['panel_dark']};
+            }}
+            QDialog QLabel {{
+                color: {p['panel']};
+                font-size: 13px;
+                font-weight: 600;
             }}
             /* Number input fields */
             QDoubleSpinBox, QSpinBox {{
@@ -556,11 +642,12 @@ class ClockWidget(QFrame):
             }}
             /* Checkbox styling */
             QCheckBox {{
-                color: {p['text']};
+                color: {p['panel']};
                 spacing: 8px;
             }}
             """
         )
+
 
     def _format_focus_time(self, total_seconds: int) -> str:
         total_minutes = total_seconds // 60
@@ -616,6 +703,13 @@ class ClockWidget(QFrame):
         dialog = TaskChooserDialog(flat_tasks, parent=self)
         dialog.task_selected.connect(self.task_selected.emit)
         dialog.exec()
+
+    def set_active_task(self, task_title: str, project_title: str = ""):
+        if project_title:
+            self.active_task_label.setText(f"🎯 Task: {task_title} ({project_title})")
+        else:
+            self.active_task_label.setText(f"🎯 Task: {task_title}")
+
 
     def apply_settings(self, settings: dict):
         """function to set the new prefered settings and update the UI , use after dialog box get closed"""

@@ -17,7 +17,7 @@
       },
       "forest_wind": {
         "enabled": false,
-        "volume": 0.81
+        "volume": 0.61
       },
       "ocean": {
         "enabled": false,
@@ -25,7 +25,7 @@
       },
       "fireplace": {
         "enabled": false,
-        "volume": 0.95
+        "volume": 0.54
       },
       "cafe": {
         "enabled": false,

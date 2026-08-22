@@ -35,14 +35,15 @@ def main() -> None:
 	S = SettingsWidget()
 	T = ProjectsWidget()
 	project_controller.set_view(T)
-	main_controller = MainController(clock_controller, project_controller)
 	w = WhiteNoiseWidget()
 	white_noise_controller = WhiteNoiseController(w)
+	main_controller = MainController(clock_controller, project_controller, white_noise_controller)
 	app.installEventFilter(white_noise_controller.engine.click_filter)
 	main_view = MainWindow(c,Pet,T,w,S)
 	main_view.show()
 
 	sys.exit(app.exec())
+
 
 
 

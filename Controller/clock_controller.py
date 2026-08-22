@@ -12,8 +12,14 @@ class ClockController(QObject):
     task_list_requested = Signal()
     task_selected = Signal(str)
 
-    def __init__(self, parent=None, settings: Optional[ClockSettings] = None):
+    def __init__(self, parent=None, settings: Optional[ClockSettings] = None, app_settings=None):
         super().__init__(parent)
+        if settings is None:
+            if app_settings is None:
+                from Model.app_settings_model import AppSettings
+                app_settings = AppSettings.load()
+            settings = ClockSettings.from_app_settings(app_settings)
+
         self.view = ClockWidget()
         self.model = Clock(settings)
         self.view.start_btn.clicked.connect(self.start_pomo)
@@ -29,6 +35,10 @@ class ClockController(QObject):
         self.model.phase_changed.connect(self.on_phase_change)
         self.model.work_session_completed.connect(self.on_work_session_completed)
 
+        # Apply initial duration & phase info to view
+        self.on_phase_change(self.model.phase)
+        self.view.set_duration(self.model.time_left)
+
     @Slot()
     def request_task_choices(self) -> None:
         self.task_list_requested.emit()
@@ -37,17 +47,18 @@ class ClockController(QObject):
     def select_task(self, task_id: str) -> None:
         self.task_selected.emit(task_id)
         self.model.change_phase(Phase.WORK)
-        self.model.time_left = int(self.model.settings.duration)
         self.view.set_phase_info("Focus time", self.model.completed_pomos, self.model.settings.pomo_until_break)
         self.view.set_duration(self.model.time_left)
         self.start_pomo()
 
     def start_pomo(self):
         self.view.set_duration(self.model.time_left)
+        self.view.pause_btn.setText("Pause")
         self.model.start()
 
     def reset_pomo(self):
         self.model.reset_timer()
+        self.view.pause_btn.setText("Pause")
         self.view.set_duration(self.model.time_left)
 
     def toggle_pause(self):
@@ -85,9 +96,14 @@ class ClockController(QObject):
 
     def skip(self):
         if self.model.phase == Phase.WORK:
-            phase = Phase.SHORT_BREAK
+            self.model.completed_pomos += 1
+            if self.model.completed_pomos % self.model.settings.pomo_until_break == 0:
+                phase = Phase.LONG_BREAK
+            else:
+                phase = Phase.SHORT_BREAK
         else:
             phase = Phase.WORK
         self.model.change_phase(phase)
         self.model.reset_timer()
         self.on_phase_change(phase=phase)
+
