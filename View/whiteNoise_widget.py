@@ -154,11 +154,11 @@ class NotificationRow(QFrame):
         self.combo = QComboBox()
         self.combo.setObjectName("soundCombo")
         self.combo.addItems([
-            "Forest Bell",
-            "Gentle Chime",
-            "Rain Drop",
-            "Soft Gong",
-            "Wood Click",
+            "Bell sound",
+            "game win",
+            "Keys Drop",
+            "Page chime",
+            "Fantasy win",
         ])
         self.combo.setCurrentText(sound)
         self.combo.setMinimumHeight(38)

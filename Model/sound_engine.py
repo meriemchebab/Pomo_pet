@@ -70,12 +70,17 @@ class SoundEngine(QObject):
     }
 
     NOTIFICATION_FILES = {
-        "Forest Bell": "assets/mixkit-twig-breaking-2945.wav",
-        "Gentle Chime": "assets/mixkit-wall-clock-tick-tock-1060.wav",
-        "Rain Drop": "assets/mixkit-light-rain-loop-2393.wav",
-        "Soft Gong": "assets/mixkit-campfire-night-wind-1736.wav",
-        "Wood Click": "assets/mixkit-twig-breaking-2945.wav",
+        "Bell sound": "assets/mixkit-achievement-bell-600.wav",
+        "game win": "assets/mixkit-quick-win-video-game-notification-269.wav",
+        "Keys Drop": "assets/mixkit-dropping-keys-in-the-floor-2839.wav",
+        "Page chime": "assets/mixkit-page-forward-single-chime-1107.wav",
+        "Fantasy win": "assets/mixkit-fantasy-game-success-notification-270.wav",
     }
+        # "Bell sound",
+        #         "game win",
+        #         "Keys Drop",
+        #         "Page chime",
+        #         "Fantasy win",
 
     CLICK_SOUND_FILE = "assets/mixkit-twig-breaking-2945.wav"
 
