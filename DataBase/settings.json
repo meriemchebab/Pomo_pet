@@ -16,7 +16,7 @@
       "forest_wind": { "enabled": true, "volume": 0.4 },
       "ocean": { "enabled": false, "volume": 0.5 },
       "fireplace": { "enabled": false, "volume": 0.5 },
-      "cafe": { "enabled": false, "volume": 0.5 }
+      "clock": { "enabled": false, "volume": 0.5 }
     },
     "sound_on_start": ["pomodoro_start", "forest_bell", "soft_chime"],
     "sound_on_break": ["break_start", "wood_ping", "water_drop"],

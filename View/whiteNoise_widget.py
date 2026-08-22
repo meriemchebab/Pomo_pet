@@ -88,8 +88,12 @@ class SectionTitle(QLabel):
 
 
 class SoundRow(QFrame):
-    def __init__(self, icon: str, title: str, value: int, checked: bool, parent=None):
+    volume_changed = Signal(str, int)
+    toggled = Signal(str, bool)
+
+    def __init__(self, key: str, icon: str, title: str, value: int, checked: bool, parent=None):
         super().__init__(parent)
+        self.key = key
         self.setObjectName("soundRow")
 
         root = QHBoxLayout(self)
@@ -120,10 +124,17 @@ class SoundRow(QFrame):
         root.addSpacing(4)
         root.addWidget(self.switch)
 
+        self.slider.valueChanged.connect(lambda v: self.volume_changed.emit(self.key, v))
+        self.switch.toggled.connect(lambda c: self.toggled.emit(self.key, c))
+
 
 class NotificationRow(QFrame):
-    def __init__(self, icon: str, label: str, sound="Forest Bell", checked=True, parent=None):
+    sound_changed = Signal(str, str)
+    toggled = Signal(str, bool)
+
+    def __init__(self, event_key: str, icon: str, label: str, sound="Forest Bell", checked=True, parent=None):
         super().__init__(parent)
+        self.event_key = event_key
         self.setObjectName("soundRow")
 
         root = QHBoxLayout(self)
@@ -160,8 +171,13 @@ class NotificationRow(QFrame):
         root.addSpacing(4)
         root.addWidget(self.switch)
 
+        self.combo.currentTextChanged.connect(lambda s: self.sound_changed.emit(self.event_key, s))
+        self.switch.toggled.connect(lambda c: self.toggled.emit(self.event_key, c))
+
 
 class MasterVolumeRow(QFrame):
+    volume_changed = Signal(int)
+
     def __init__(self, value=60, parent=None):
         super().__init__(parent)
         self.setObjectName("soundRow")
@@ -188,15 +204,25 @@ class MasterVolumeRow(QFrame):
         self.value_label.setObjectName("percentLabel")
         self.value_label.setFixedWidth(34)
 
-        self.slider.valueChanged.connect(lambda v: self.value_label.setText(f"{v}%"))
+        self.slider.valueChanged.connect(self._on_value_changed)
 
         root.addWidget(self.icon_label)
         root.addWidget(self.title_label)
         root.addWidget(self.slider, 1)
         root.addWidget(self.value_label)
 
+    def _on_value_changed(self, v: int):
+        self.value_label.setText(f"{v}%")
+        self.volume_changed.emit(v)
+
 
 class WhiteNoiseWidget(QFrame):
+    track_volume_changed = Signal(str, int)
+    track_toggled = Signal(str, bool)
+    master_volume_changed = Signal(int)
+    notification_sound_changed = Signal(str, str)
+    notification_toggled = Signal(str, bool)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("panelCard")
@@ -210,21 +236,45 @@ class WhiteNoiseWidget(QFrame):
         root.addWidget(title)
         root.addSpacing(2)
 
-        root.addWidget(SoundRow("🌧", "Rain", 58, True))
-        root.addWidget(SoundRow("🌊", "Ocean", 34, False))
-        root.addWidget(SoundRow("🔥", "Fireplace", 39, False))
-        root.addWidget(SoundRow("🍃", "Forest", 20, True))
-        root.addWidget(SoundRow("☕", "Café", 31, False))
+        self.sound_rows: dict[str, SoundRow] = {}
+        sound_configs = [
+            ("rain", "🌧", "Rain", 58, True),
+            ("ocean", "🌊", "Ocean", 34, False),
+            ("fireplace", "🔥", "Fireplace", 39, False),
+            ("forest_wind", "🍃", "Forest", 20, True),
+            ("clock", "☕", "Clock", 31, False),
+        ]
+
+        for key, icon, name, val, checked in sound_configs:
+            row = SoundRow(key, icon, name, val, checked)
+            row.volume_changed.connect(self.track_volume_changed.emit)
+            row.toggled.connect(self.track_toggled.emit)
+            self.sound_rows[key] = row
+            root.addWidget(row)
 
         root.addSpacing(8)
         root.addWidget(SectionTitle("NOTIFICATION SOUNDS"))
-        root.addWidget(NotificationRow("🔔", "start"))
-        root.addWidget(NotificationRow("🎵", "break"))
-        root.addWidget(NotificationRow("✅", "finish"))
+
+        self.notification_rows: dict[str, NotificationRow] = {}
+        notif_configs = [
+            ("start", "🔔", "start"),
+            ("break", "🎵", "break"),
+            ("finish", "✅", "finish"),
+        ]
+
+        for event_key, icon, label in notif_configs:
+            row = NotificationRow(event_key, icon, label)
+            row.sound_changed.connect(self.notification_sound_changed.emit)
+            row.toggled.connect(self.notification_toggled.emit)
+            self.notification_rows[event_key] = row
+            root.addWidget(row)
 
         root.addSpacing(8)
         root.addWidget(SectionTitle("MASTER VOLUME"))
-        root.addWidget(MasterVolumeRow(60))
+
+        self.master_volume_row = MasterVolumeRow(60)
+        self.master_volume_row.volume_changed.connect(self.master_volume_changed.emit)
+        root.addWidget(self.master_volume_row)
         root.addStretch()
 
         self.setStyleSheet("""

@@ -2,25 +2,36 @@
   "timer": {
     "work_duration": 1500,
     "short_break": 300,
-    "long_break": 1800,
+    "long_break": 900,
     "pomo_until_break": 4,
-    "auto_start_breaks": false,
-    "auto_start_focus" : false
+    "auto_start_break": false,
+    "auto_start_focus": false
   },
-  "sounds": {
-    "master_volume": 0.6,
+  "sound": {
+    "master_volume": 0.65,
     "auto_play_on_focus": true,
-    "auto_pause_on_break": false,
     "white_noise": {
-      "rain": { "enabled": true, "volume": 0.7 },
-      "forest_wind": { "enabled": true, "volume": 0.4 },
-      "ocean": { "enabled": false, "volume": 0.5 },
-      "fireplace": { "enabled": false, "volume": 0.5 },
-      "cafe": { "enabled": false, "volume": 0.5 }
-    },
-    "sound_on_start": ["pomodoro_start", "forest_bell", "soft_chime"],
-    "sound_on_break": ["break_start", "wood_ping", "water_drop"],
-    "sound_on_finish": ["pomodoro_finish", "victory_tone", "bell_ring"]
+      "rain": {
+        "enabled": false,
+        "volume": 0.85
+      },
+      "forest_wind": {
+        "enabled": false,
+        "volume": 0.81
+      },
+      "ocean": {
+        "enabled": false,
+        "volume": 0.93
+      },
+      "fireplace": {
+        "enabled": false,
+        "volume": 0.95
+      },
+      "cafe": {
+        "enabled": false,
+        "volume": 0.5
+      }
+    }
   },
   "theme": {
     "current_theme": "Forest Light"

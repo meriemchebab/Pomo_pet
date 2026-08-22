@@ -13,6 +13,7 @@ from View.theme import ThemeBuilder
 from Controller.clock_controller import ClockController
 from Controller.main_controller import MainController
 from Controller.project_controller import ProjectController
+from Controller.white_noise_controller import WhiteNoiseController
 from View.pet_widget import PetWidget
 from View.settings_widget import SettingsWidget
 from View.project_widget import ProjectsWidget
@@ -36,10 +37,14 @@ def main() -> None:
 	project_controller.set_view(T)
 	main_controller = MainController(clock_controller, project_controller)
 	w = WhiteNoiseWidget()
+	white_noise_controller = WhiteNoiseController(w)
+	app.installEventFilter(white_noise_controller.engine.click_filter)
 	main_view = MainWindow(c,Pet,T,w,S)
 	main_view.show()
 
 	sys.exit(app.exec())
+
+
 
 
 if __name__ == "__main__":
