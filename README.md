@@ -31,6 +31,23 @@
 
 ---
 
+## Screenshots
+
+### Main Window with the timer
+![Main Window](assets/pomo_main.png)
+
+
+### Virtual Pet
+![Virtual Pet](assets/pomo_pet.png)
+
+### Projects & Tasks
+![Projects & Tasks](assets/pomo_project.png)
+
+### Settings
+![Settings](assets/pomo_settings.png)
+
+---
+
 ## Quick Start
 
 ### 1. Prerequisites
