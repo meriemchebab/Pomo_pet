@@ -87,14 +87,14 @@ class Sidebar(QFrame):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # top: logo + toggle
+        
         top = QFrame()
         top.setObjectName("sbTop")
         top_row = QHBoxLayout(top)
         top_row.setContentsMargins(12, 10, 10, 8)
         top_row.setSpacing(8)
 
-        self._logo = QLabel("Chrono Forest")
+        self._logo = QLabel("Pomo Pet")
         self._logo.setObjectName("sbLogo")
         top_row.addWidget(self._logo, stretch=1)
 
@@ -265,21 +265,13 @@ class Sidebar(QFrame):
 
 
 class MainWindow(QWidget):
-    """
-    Main window — sidebar + stacked panels only.
-    The clock floats separately as FloatingClock.
 
-    ┌────────┬──────────────────────────────┐
-    │Sidebar │     QStackedWidget           │
-    │  nav   │     (active panel)           │
-    └────────┴──────────────────────────────┘
-    """
 
     def __init__(self, forest_widget, pet_widget,
                  projects_widget, sounds_widget,
                  settings_widget, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Chrono Forest")
+        self.setWindowTitle("Pomo pet")
         self.setMinimumSize(640, 520)
         self.resize(860, 640)
 

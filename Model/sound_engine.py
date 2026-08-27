@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 from PySide6.QtCore import QEvent, QObject, QUrl, Qt
 from PySide6.QtWidgets import QAbstractButton, QComboBox, QSlider
@@ -11,6 +12,7 @@ class UIClickSoundFilter(QObject):
     def __init__(self, click_sound_path: str, parent: QObject | None = None):
         super().__init__(parent)
         self.sound = QSoundEffect(self)
+        self._last_click_at = 0.0
         if os.path.exists(click_sound_path):
             self.sound.setSource(QUrl.fromLocalFile(os.path.abspath(click_sound_path)))
             self.sound.setLoopCount(1)
@@ -20,7 +22,7 @@ class UIClickSoundFilter(QObject):
         self.sound.setVolume(max(0.0, min(1.0, volume)))
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        if event.type() == QEvent.Type.MouseButtonPress:
+        if event.type() == QEvent.Type.MouseButtonRelease:
             if isinstance(watched, (QAbstractButton, QComboBox, QSlider)):
                 self.play_click()
             elif hasattr(watched, "cursor") and watched.cursor().shape() == Qt.CursorShape.PointingHandCursor:
@@ -28,6 +30,11 @@ class UIClickSoundFilter(QObject):
         return super().eventFilter(watched, event)
 
     def play_click(self) -> None:
+        now = time.monotonic()
+        if now - self._last_click_at < 0.04:
+            return
+        self._last_click_at = now
+
         if self.sound.volume() > 0:
             self.sound.stop()
             self.sound.play()
@@ -134,4 +141,3 @@ class SoundEngine(QObject):
             self.notif_sound.setSource(QUrl.fromLocalFile(os.path.abspath(full_path)))
             self.notif_sound.setVolume(self._master_volume)
             self.notif_sound.play()
-

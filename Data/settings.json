@@ -8,12 +8,12 @@
     "auto_start_focus": false
   },
   "sound": {
-    "master_volume": 0.91,
+    "master_volume": 0.8,
     "auto_play_on_focus": true,
     "white_noise": {
       "rain": {
         "enabled": false,
-        "volume": 0.85
+        "volume": 0.68
       },
       "forest_wind": {
         "enabled": false,
@@ -25,7 +25,7 @@
       },
       "fireplace": {
         "enabled": false,
-        "volume": 0.54
+        "volume": 1.0
       },
       "cafe": {
         "enabled": false,
