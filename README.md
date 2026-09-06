@@ -41,7 +41,7 @@
 ![Virtual Pet](assets/pomo_pet.png)
 
 ### Projects & Tasks
-![Projects & Tasks](assets/pomo_project.png)
+![Projects & Tasks](assets/project_pomo.png)
 
 ### Settings
 ![Settings](assets/pomo_settings.png)
