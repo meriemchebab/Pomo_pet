@@ -13,7 +13,7 @@
     "white_noise": {
       "rain": {
         "enabled": false,
-        "volume": 0.68
+        "volume": 0.84
       },
       "forest_wind": {
         "enabled": false,
@@ -21,7 +21,7 @@
       },
       "ocean": {
         "enabled": false,
-        "volume": 0.93
+        "volume": 0.41
       },
       "fireplace": {
         "enabled": false,
